@@ -59,7 +59,7 @@ export function createUI(root) {
   let pendingConfirmation;
   const numberAnimations = new Map();
   let numericFrame = 0;
-  const observed = new Map();
+  const observed = new WeakMap();
   const history = [];
   function animateNumber(element, value) {
     if (observed.get(element) === value) return;

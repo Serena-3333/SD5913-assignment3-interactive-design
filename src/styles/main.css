@@ -814,21 +814,6 @@ h3 {
   line-height: 1.75;
   margin-top: 7px;
 }
-.journal details {
-  margin-top: 10px;
-  font-size: 9px;
-  line-height: 1.7;
-  color: #8d9275;
-}
-.journal summary {
-  cursor: pointer;
-}
-.journal ol {
-  padding-left: 15px;
-}
-.journal li {
-  margin-top: 8px;
-}
 .clear-button {
   display: flex;
   margin: 9px 0 0 auto;
