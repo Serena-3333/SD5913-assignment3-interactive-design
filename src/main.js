@@ -10,11 +10,8 @@ import {
   setLamp,
   nextDay,
   resetExperiment,
-  conditionsFor,
   moistureAt,
 } from "./simulation/simulation.js";
-import { SPECIES, SLOTS } from "./simulation/species.js";
-import { dailyObservation, movementObservation } from "./ui/journal.js";
 const ui = createUI(document.querySelector("#app"));
 let state = createInitialState(),
   busy = false,
@@ -24,46 +21,34 @@ let state = createInitialState(),
 const controller = new AbortController();
 const getState = () => state,
   isBusy = () => busy;
-function update(next, message) {
+function update(next) {
   state = next;
   world.sync();
   ui.render(state, busy);
-  if (message) ui.journal(state, message);
 }
 function onPlace(species, slot) {
   if (busy) return;
-  const existing = state.plants.find((p) => p.species === species),
-    before = state;
+  const existing = state.plants.find((p) => p.species === species);
   if (existing) {
-    const swapped = state.plants.some((p) => p.slot === slot && p !== existing),
-      next = movePlant(state, species, slot);
-    if (next !== state)
-      update(next, movementObservation(before, next, species, swapped));
-  } else {
-    const next = plantAt(state, species, slot);
-    if (next === state) {
-      ui.toast(
-        state.plants.length >= 3
-          ? "Room for three. Clear the jar to try a new mix."
-          : "That spot is already taken.",
-      );
-      return;
-    }
-    update(
-      next,
-      `${SPECIES[species].name} is settling in. Find the water and light it likes.`,
-    );
+    update(movePlant(state, species, slot));
+    return;
   }
-}
-function onLamp(patch, commit = true) {
-  if (busy) return;
-  update(setLamp(state, patch));
-  if (commit)
-    ui.journal(
-      state,
-      "A new angle, a different little pool of light. Watch each plant’s comfort.",
+  const next = plantAt(state, species, slot);
+  if (next === state) {
+    ui.toast(
+      state.plants.length >= 3
+        ? "Room for three. Clear the jar to try a new mix."
+        : "That spot is already taken.",
     );
+    return;
+  }
+  update(next);
+  if (next.plants.length === 3) ui.setCollectionOpen(false);
 }
+function onLamp(patch) {
+  if (!busy) update(setLamp(state, patch));
+}
+
 function onWater(point) {
   if (busy || world.wateringCan.pouring) return;
   const next = waterSoil(state, point);
@@ -74,10 +59,7 @@ function onWater(point) {
     ui.toast("This patch is fully watered.");
     return;
   }
-  update(
-    next,
-    `A small shower in one patch. Moisture here: ${Math.round(before)}% → ${Math.round(after)}%.`,
-  );
+  update(next);
   world.pour(point);
 }
 try {
@@ -107,6 +89,8 @@ try {
       signal: controller.signal,
     });
   }
+  listen("#collection-close", "click", () => ui.setCollectionOpen(false));
+  listen("#collection-open", "click", () => ui.setCollectionOpen(true));
   listen("#camera-reset", "click", () => world.resetCamera());
   listen("#next-day", "click", () => {
     if (busy || state.plants.length < 2) return;
@@ -115,7 +99,6 @@ try {
     state = nextDay(state);
     world.sync();
     ui.render(state, busy);
-    ui.journal(state, dailyObservation(state));
     dayTimer = setTimeout(() => {
       busy = false;
       ui.render(state, busy);
@@ -128,10 +111,8 @@ try {
       ui.confirm(kind, () => {
         update(
           kind === "reset" ? resetExperiment(state) : createInitialState(),
-          kind === "reset"
-            ? "A fresh start, with familiar little plants."
-            : "Choose a plant. Find its happy place.",
         );
+        ui.setCollectionOpen(true);
         world.resetCamera();
       });
     });

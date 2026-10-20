@@ -1,6 +1,10 @@
 import * as THREE from "three";
 import { SLOTS, SPECIES } from "../simulation/species.js";
-import { SOIL_RADIUS, surfaceHeight } from "../simulation/environment.js";
+import {
+  SOIL_RADIUS,
+  surfaceHeight,
+  clampToSoil,
+} from "../simulation/environment.js";
 import { conditionsFor } from "../simulation/simulation.js";
 export function createInteractions(
   world,
@@ -15,8 +19,14 @@ export function createInteractions(
   let selected = null,
     tool = null,
     drag = null,
-    currentSlot = -1;
+    currentSlot = -1,
+    keyboardWaterPoint = { x: 0, z: 0 };
   const cursor = ui.$("#drag-cursor");
+  canvas.tabIndex = 0;
+  canvas.setAttribute(
+    "aria-label",
+    "Terrarium. Water tool: arrow keys aim, Enter pours, Escape cancels.",
+  );
   function ray(event) {
     const r = canvas.getBoundingClientRect();
     raycaster.setFromCamera(
@@ -91,6 +101,7 @@ export function createInteractions(
     select(null);
     ui.tool(tool);
     world.setTool(tool);
+    if (tool === "water") canvas.focus({ preventScroll: true });
     redraw();
   }
   function clear() {
@@ -340,6 +351,26 @@ export function createInteractions(
     "keydown",
     (e) => {
       if (e.key === "Escape") cancel(true);
+      if (tool !== "water" || e.target !== canvas || drag || isBusy()) return;
+      const steps = {
+        ArrowLeft: [-0.12, 0],
+        ArrowRight: [0.12, 0],
+        ArrowUp: [0, -0.12],
+        ArrowDown: [0, 0.12],
+      };
+      if (steps[e.key]) {
+        e.preventDefault();
+        const [x, z] = steps[e.key];
+        keyboardWaterPoint = clampToSoil({
+          x: keyboardWaterPoint.x + x,
+          z: keyboardWaterPoint.z + z,
+        });
+        world.waterPreview(keyboardWaterPoint);
+      } else if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        world.waterPreview(null);
+        onWater(keyboardWaterPoint);
+      }
     },
     { signal },
   );
@@ -350,10 +381,7 @@ export function createInteractions(
         if (isBusy()) return;
         const slot = Number(button.dataset.slot),
           point = SLOTS[slot];
-        if (tool === "water") {
-          onWater(point);
-          return;
-        }
+        if (tool === "water") return;
         if (tool === "lamp") {
           onLamp({ target: { x: point.x, z: point.z } }, true);
           return;

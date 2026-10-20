@@ -1,7 +1,7 @@
 // Shared world geometry. Model units are illustrative, not physical metres.
 export const SOIL_RADIUS = 1.26;
 export const SOIL_Y = 0.64;
-export const WATER_RADIUS = 0.55;
+export const WATER_RADIUS = 0.82;
 export const WATER_AMOUNT = 24;
 export const AMBIENT_LIGHT = 20;
 export const CAMERA = {

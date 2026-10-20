@@ -47,3 +47,11 @@ Record actual feedback, evidence, and resulting changes here. Do not substitute 
 - Added a shared lamp frame for its base, arm, head, real spotlight and numeric cone. Orbit, reach, aim, beam width and power are independent controls. Escape restores an uncommitted lamp gesture. Camera motion changes no ecological state.
 - Passed 16 updated simulation checks and 22 real-browser acceptance checks. A camera-invariance assertion was adjusted from bitwise floating-point equality to a 0.00001 position tolerance to account for residual OrbitControls damping.
 - Inspected overview, water preview, orbit, isolated-light and light-off frames. Source isolation prompted a final correction to custom-leaf face winding; corrected surfaces were re-inspected. Also seated tool bases and connected terrain edges. These checks do not constitute student usability testing.
+
+## User feedback refinement · 2026-10-20
+
+- Fixed Reach: extending the arm now translates the light aim along the lamp's radial axis. The real spotlight, terrain footprint and deterministic light readings continue to share that aim. Direct targeting and Escape restoration remain absolute.
+- Increased the watering radius from 0.55 to 0.82 model units. Watering can freely target any soil point; a point between two roots waters both with tapered strength. Removed the three-spot watering UI. Arrow keys move a continuous target and Enter pours as a keyboard alternative.
+- Replaced reminder bubbles with paper notes using tape, ruled/dotted stock and subtle paper shadows in the existing palette. Removed Little observations and its unused journal code.
+- Added manual collection collapse/reopen and automatic collapse after the third species. The released column expands the scene; preferences remain available. Confirmed Reset and Clear reopen the collection, while cancelling keeps the existing layout.
+- Passed 18 simulation tests and 22 real-browser acceptance checks, including actual footprint vertex movement with Reach, free midpoint watering and collection width changes. Inspected the revised planted view and water preview, and regenerated application screenshots. Production build succeeds. These are developer checks; no student user research is claimed.

@@ -71,7 +71,14 @@ async function dragCard(species, to, release = true) {
   const r = await page.locator(`[data-species="${species}"]`).boundingBox();
   await drag({ x: r.x + r.width / 2, y: r.y + r.height / 3 }, to, release);
 }
+async function openCollection() {
+  if (await page.locator("#collection-open").isVisible()) {
+    await page.locator("#collection-open").click();
+    await settle();
+  }
+}
 async function put(species, slot) {
+  await openCollection();
   await page.locator(`[data-species="${species}"]`).click();
   await page.locator(`[data-slot="${slot}"]`).click();
   await settle();
@@ -195,6 +202,17 @@ try {
       await page.keyboard.press("Enter");
       await put("succulent", 1);
       assert.equal((await read()).plants.length, 3);
+      assert.ok(await page.locator(".collection").isHidden());
+      const wide = await page.locator("canvas").boundingBox();
+      await openCollection();
+      const narrow = await page.locator("canvas").boundingBox();
+      assert.ok(wide.width > narrow.width + 200);
+      const saved = await read();
+      await page.locator("#collection-close").click();
+      assert.ok(await page.locator(".collection").isHidden());
+      await openCollection();
+      assert.deepEqual(await read(), saved);
+      assert.equal(await page.locator("#journal-title").count(), 0);
       await page.locator('[data-species="fittonia"]').click();
       await page.locator('[data-slot="0"]').click();
       assert.equal((await read()).plants.length, 3);
@@ -255,15 +273,24 @@ try {
     },
   );
   await check(
-    "water tool provides keyboard-targeted watering instead of a global fallback",
+    "free watering between plants covers both roots and has no fixed-slot picker",
     async () => {
       await page.locator("#water-button").click();
-      await page.locator('[data-slot="1"]').focus();
-      await page.keyboard.press("Enter");
+      assert.ok(await page.locator(".slot-picker").isHidden());
+      const before = await read();
+      const x = (SLOTS[0].x + SLOTS[1].x) / 2;
+      const z = (SLOTS[0].z + SLOTS[1].z) / 2;
+      const p = await point(x, surfaceHeight(x, z), z);
+      await page.mouse.click(p.x, p.y);
       await settle();
       const after = await read();
-      assert.ok(moistureAt(after, SLOTS[1]) > 82);
-      assert.equal(Math.round(moistureAt(after, SLOTS[2])), 60);
+      assert.ok(
+        moistureAt(after, SLOTS[0]) > moistureAt(before, SLOTS[0]) + 10,
+      );
+      assert.ok(
+        moistureAt(after, SLOTS[1]) > moistureAt(before, SLOTS[1]) + 10,
+      );
+      assert.ok(after.moisture.some((v) => v === 60));
       assert.ok(after.plants.every((p) => p.health === 70));
       await waitCan();
       await closeTool();
@@ -295,7 +322,7 @@ try {
             after.plants.find((p) => p.species === "moss"),
           ).moisture,
         ),
-        60,
+        Math.round(moistureAt(before, SLOTS[2])),
       );
       sameCamera(
         await appCall("return app.inspectScene().camera.position.toArray();"),
@@ -307,6 +334,7 @@ try {
   await check(
     "planted collection cards can select and move a plant without duplication",
     async () => {
+      await openCollection();
       await page.locator('[data-species="moss"]').focus();
       await page.keyboard.press("Enter");
       await page.locator('[data-slot="0"]').click();
@@ -402,8 +430,23 @@ try {
       await page.locator("#lamp-reach").focus();
       await page.keyboard.press("Home");
       assert.equal((await read()).lamp.reach, 0);
+      const startTarget = (await read()).lamp.target;
       await page.keyboard.press("End");
-      assert.equal((await read()).lamp.reach, 1.45);
+      const end = await read();
+      assert.equal(end.lamp.reach, 1.45);
+      assert.ok(
+        Math.hypot(
+          end.lamp.target.x - startTarget.x,
+          end.lamp.target.z - startTarget.z,
+        ) > 0.5,
+      );
+      const aim = await appCall(
+        "const l=app.inspectScene().lamp,p=l.footprint.mesh.geometry.attributes.position;return {x:p.getX(0),z:p.getZ(0),target:l.light.target.position.toArray()};",
+      );
+      assert.ok(Math.abs(aim.x - end.lamp.target.x) < 1e-6);
+      assert.ok(Math.abs(aim.z - end.lamp.target.z) < 1e-6);
+      assert.equal(aim.target[0], end.lamp.target.x);
+      assert.equal(aim.target[2], end.lamp.target.z);
       sameCamera(
         await appCall("return app.inspectScene().camera.position.toArray();"),
         cam,
@@ -497,10 +540,13 @@ try {
     "reset confirmation preserves arrangement but resets all local fields and lamp controls",
     async () => {
       const before = await read();
+      await page.locator("#collection-close").click();
       await page.locator("#reset-button").click();
       await page.keyboard.press("Escape");
       assert.deepEqual(await read(), before);
+      assert.ok(await page.locator(".collection").isHidden());
       await confirm("reset");
+      assert.ok(await page.locator(".collection").isVisible());
       const s = await read();
       assert.equal(s.day, 1);
       assert.ok(s.moisture.every((v) => v === 60));
@@ -564,7 +610,9 @@ try {
   await check(
     "clear resets everything and the fourth species can be planted",
     async () => {
+      await page.locator("#collection-close").click();
       await confirm("clear");
+      assert.ok(await page.locator(".collection").isVisible());
       const s = await read();
       assert.equal(s.plants.length, 0);
       assert.equal(s.day, 1);
@@ -594,9 +642,11 @@ try {
       await put("moss", 0);
       await put("fern", 2);
       await page.locator("#water-button").click();
-      await page.locator('[data-slot="0"]').click();
+      await page.locator("canvas").focus();
+      await page.keyboard.press("ArrowLeft");
+      await page.keyboard.press("Enter");
       await settle();
-      assert.ok(moistureAt(await read(), SLOTS[0]) > 82);
+      assert.ok(moistureAt(await read(), { x: -0.12, z: 0 }) > 82);
       await page.screenshot({
         path: "test-results/mobile.png",
         fullPage: true,

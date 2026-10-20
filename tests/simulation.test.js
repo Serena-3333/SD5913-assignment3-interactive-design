@@ -69,7 +69,7 @@ test("localized watering changes exactly samples inside its visible footprint", 
       changed++;
     }
   });
-  assert.ok(changed > 15 && changed < SOIL_POINTS.length / 3);
+  assert.ok(changed > 15 && changed < SOIL_POINTS.length * 0.6);
   assert.equal(s.soilMoisture, 60);
   assert.ok(s.moisture.every((v) => v === 60));
   near(w.soilMoisture, averageMoisture(w.moisture));
@@ -81,7 +81,7 @@ test("water reaches the selected roots without changing a distant plant, health,
   near(conditionsFor(w, w.plants[1]).moisture, 60);
   assert.deepEqual(w.plants, s.plants);
   assert.equal(w.day, 1);
-  assert.ok(w.soilMoisture < 65);
+  assert.ok(w.soilMoisture < 70);
 });
 test("repeated local watering caps samples at 100 while unwatered areas stay at 60", () => {
   let s = two();
@@ -259,4 +259,35 @@ test("long drought remains bounded and repeated experiments remain deterministic
   );
   assert.notEqual(comfortFor("moss", 78, 45), comfortFor("succulent", 78, 45));
   assert.equal(Object.keys(SPECIES).length, 4);
+});
+
+test("free watering at a midpoint reaches two neighbouring roots without watering the whole jar", () => {
+  const s = createInitialState();
+  const target = {
+    x: (SLOTS[0].x + SLOTS[1].x) / 2,
+    z: (SLOTS[0].z + SLOTS[1].z) / 2,
+  };
+  const wet = waterSoil(s, target);
+  assert.ok(moistureAt(wet, SLOTS[0]) > 73);
+  assert.ok(moistureAt(wet, SLOTS[1]) > 73);
+  assert.ok(moistureAt(wet, SLOTS[2]) < 65);
+  assert.ok(wet.moisture.some((v) => v === 60));
+  assert.notEqual(target.x, SLOTS[0].x);
+});
+test("reach translates the light target along the arm and explicit aiming remains absolute", () => {
+  const initial = setLamp(two(), { target: { x: 0, z: 0 }, radius: 0.3 });
+  const extended = setLamp(initial, { reach: initial.lamp.reach + 0.4 });
+  const angle = (initial.lamp.azimuth * Math.PI) / 180;
+  near(extended.lamp.target.x, -Math.sin(angle) * 0.4);
+  near(extended.lamp.target.z, -Math.cos(angle) * 0.4);
+  const frame = lampFrame(extended.lamp);
+  near(frame.aim.x, extended.lamp.target.x);
+  near(frame.aim.z, extended.lamp.target.z);
+  assert.notEqual(
+    lightAt(initial.lamp, initial.lamp.target),
+    lightAt(extended.lamp, initial.lamp.target),
+  );
+  assert.deepEqual(setLamp(extended, initial.lamp).lamp, initial.lamp);
+  assert.deepEqual(extended.plants, initial.plants);
+  assert.deepEqual(extended.moisture, initial.moisture);
 });

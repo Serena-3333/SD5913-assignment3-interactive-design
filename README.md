@@ -29,8 +29,9 @@ On this Mac, `Start Terrarium.command` can use the Codex bundled Node runtime wh
 ## Controls
 
 - Drag a collection card into a planting ring. The translucent model previews local comfort before release. A planted card selects/moves that existing plant rather than creating a duplicate.
+- The collection collapses automatically after planting three species. Close it earlier with ×, or reopen **Plants & preferences** anytime. Confirmed Reset and Clear reopen the collection.
 - Drag plants to move or swap them. Alternatively, select a card with click/Enter and choose a named spot. Escape/pointercancel cancels an unfinished operation.
-- **Drag the watering can onto a soil patch and release.** The blue footprint has a fixed radius of 0.55 model units. Only samples within that patch gain water. The can lifts above the glass, pours at the chosen point, and returns. The Water button plus a named spot is the keyboard/tap alternative.
+- **Drag the watering can onto a soil patch and release.** The blue footprint has a fixed radius of 0.82 model units. Only samples within that patch gain water. The can lifts above the glass, pours at the chosen point, and returns. Alternatively, select Water and click any soil point. With the scene focused, arrow keys move a free target and Enter pours. A midpoint can water two neighbours at once; the footprint and soil field use the same radius.
 - **Drag the lamp head** to orbit and extend it. Select **Light** to reveal Orbit, Reach, Beam and Power. Drag the light spot over the soil to aim, or choose a named spot. Zero power switches off the actual spotlight and footprint; ambient light remains.
 - Drag empty scene space to orbit the camera; scroll to zoom. The circular arrow restores the view.
 - Plant at least two species, then **Next Day**. Health and growth update only here; live comfort changes immediately with water, light and placement. The transition blocks repeated clicks for 800 ms.
@@ -40,9 +41,9 @@ On this Mac, `Start Terrarium.command` can use the Codex bundled Node runtime wh
 
 The jar is smaller than the initial MVP: soil radius 1.26, glass bulge radius 1.46, rim height 2.31. Sloped terrain, connected soil layers, stones and a small branch give the plants support and height variation. Fern is tallest, Fittonia medium, Succulent compact, and Moss a low spreading cushion. These are stylized representatives, not species-specific botanical measurements.
 
-Water is stored on a deterministic hexagonal field. A shower adds up to 24 points at its centre, tapering to zero at radius 0.55; each sample caps at 100. Plant water values interpolate that field at their root positions. The soil-average bar is only a summary. Wetness stays in the soil when a plant moves.
+Water is stored on a deterministic hexagonal field. A shower adds up to 24 points at its centre, tapering to zero at radius 0.82; each sample caps at 100. Plant water values interpolate that field at their root positions. The soil-average bar is only a summary. Wetness stays in the soil when a plant moves.
 
-Lamp geometry, spotlight, footprint and numeric light calculation share the same emitter, axis and cone angle. Beam and power are independent. The simulation has ambient light 20 plus a bounded cone contribution, capped at 85; the readings are illustrative comfort units rather than measured lux. Daily drying is local: evaporation depends on light at each sample and uptake depends on nearby roots. Comfort remains 55% moisture suitability plus 45% light suitability. The initial health/growth values and daily health/growth rules remain unchanged.
+Lamp geometry, spotlight, footprint and numeric light calculation share the same emitter, axis and cone angle. Reach moves both the head and light patch along the arm; direct aiming sets a new absolute target. Beam and power are independent. The simulation has ambient light 20 plus a bounded cone contribution, capped at 85; the readings are illustrative comfort units rather than measured lux. Daily drying is local: evaporation depends on light at each sample and uptake depends on nearby roots. Comfort remains 55% moisture suitability plus 45% light suitability. The initial health/growth values and daily health/growth rules remain unchanged.
 
 ## Code map
 
@@ -53,11 +54,11 @@ Lamp geometry, spotlight, footprint and numeric light calculation share the same
 - `src/scene/lamp.js`, `wateringCan.js`, `footprint.js`: articulated tools, real spotlight, target footprints and water animation.
 - `src/scene/createScene.js`: renderer/camera and animation; the render loop parks when idle.
 - `src/interactions/plantDrag.js`: raycasting, plant/water/lamp gestures, cancellation and alternatives.
-- `src/ui/`, `src/styles/main.css`: illustrated paper UI, controls, concise observations and responsive layout.
+- `src/ui/`, `src/styles/main.css`: illustrated paper UI, controls, taped paper reminders and responsive layout.
 
 ## Verification and limitations
 
-**16 simulation tests and 22 Chromium browser acceptance checks passed.** Production build succeeds. Browser checks include actual plant/water/head/aim dragging, isolated watering, narrow/zero/max beam controls, preserved health, camera invariance, reset, cancellation, idle rendering and a 390 px layout. The source-only and all-lights-off frames were inspected at fixed exposure. Actual screenshots are in `docs/screenshots/`; generated reports are in the ignored `test-results/` folder.
+**18 simulation tests and 22 Chromium browser acceptance checks passed.** Production build succeeds. Browser checks include actual plant/water/head/aim dragging, isolated watering, narrow/zero/max beam controls, preserved health, camera invariance, reset, cancellation, idle rendering and a 390 px layout. The source-only and all-lights-off frames were inspected at fixed exposure. Actual screenshots are in `docs/screenshots/`; generated reports are in the ignored `test-results/` folder.
 
 The latest refinement used the **3dviz-pro-max** object, material, lighting and inspection guidance with custom Three.js geometry/shaders; no catalog kit or external model was used. Supplied references were visual guidance only. Locally bundled fonts retain their OFL licenses.
 

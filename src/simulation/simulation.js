@@ -126,7 +126,7 @@ export function waterSoil(state, point) {
       point.x - SOIL_POINTS[i].x,
       point.z - SOIL_POINTS[i].z,
     );
-    // Compact support: nothing beyond the visible 0.55-unit footprint changes.
+    // Compact support: nothing beyond the shared visible footprint radius changes.
     const weight = d < WATER_RADIUS ? (1 - (d / WATER_RADIUS) ** 2) ** 0.65 : 0;
     return clamp(value + WATER_AMOUNT * weight, 0, 100);
   });
@@ -142,6 +142,19 @@ export function setLamp(state, patch) {
     ["power", 0, 100],
   ])
     if (Number.isFinite(patch[key])) lamp[key] = clamp(patch[key], min, max);
+  // Extension translates the aimed patch along the arm, preserving manual aim.
+  // A supplied target (including gesture cancellation) is an absolute override.
+  if (Number.isFinite(patch.reach) && !patch.target) {
+    const angle = (lamp.azimuth * Math.PI) / 180;
+    const delta = lamp.reach - state.lamp.reach;
+    lamp.target = clampToSoil(
+      {
+        x: lamp.target.x - Math.sin(angle) * delta,
+        z: lamp.target.z - Math.cos(angle) * delta,
+      },
+      0.08,
+    );
+  }
   if (
     patch.target &&
     Number.isFinite(patch.target.x) &&
