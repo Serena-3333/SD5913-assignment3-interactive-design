@@ -1,5 +1,7 @@
 # Pocket Terrarium
 
+SD5913 Assignment 3 — Interactive Design · First Demo
+
 A tiny interactive botanical world for a two-to-three-minute break. Choose plants, arrange their environment, and observe their responses. Built with Vite, vanilla JavaScript and Three.js; no backend, account, API or remote runtime assets.
 
 ![Actual running application](docs/screenshots/planted-terrarium.png)
