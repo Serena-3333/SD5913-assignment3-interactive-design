@@ -48,7 +48,7 @@ export function createTerrarium(scene) {
   );
   const decorations = [];
   const gravel = [mat(0xe6c78e), mat(0xc3b384), mat(0xebd8ae)];
-  for (let i = 0; i < 27; i++) {
+  for (let i = 0; i < 15; i++) {
     const a = i * 2.39996,
       r = 0.92 + (i % 3) * 0.07,
       item = add(new THREE.DodecahedronGeometry(1, 0), gravel[i % 3], [
@@ -61,8 +61,8 @@ export function createTerrarium(scene) {
     decorations.push(item);
   }
   const points = [[0, surfaceHeight(0, 0), 0]];
-  const radial = 7,
-    segments = 40;
+  const radial = 5,
+    segments = 32;
   for (let r = 1; r <= radial; r++)
     for (let j = 0; j < segments; j++) {
       const a = (j / segments) * Math.PI * 2 + (r % 2) * 0.028,
@@ -175,9 +175,9 @@ export function createTerrarium(scene) {
       twigMat,
     ),
   );
-  for (let i = 0; i < 28; i++) {
+  for (let i = 0; i < 18; i++) {
     const a = i * 2.39996,
-      r = Math.sqrt((i + 0.5) / 28) * 1.18,
+      r = Math.sqrt((i + 0.5) / 18) * 1.18,
       x = Math.cos(a) * r,
       z = Math.sin(a) * r;
     const pebble = add(new THREE.IcosahedronGeometry(1, 0), gravel[i % 3], [
@@ -229,7 +229,12 @@ export function createTerrarium(scene) {
     [1.135, 2.26, 0.022],
     [1.045, 0.1, 0.032],
   ]) {
-    const item = add(new THREE.TorusGeometry(r, t, 6, 48), rimMat, [0, y, 0]);
+    // Keep the visible opening smooth; simplify the secondary and bottom rings.
+    const item = add(
+      new THREE.TorusGeometry(r, t, y === 2.31 ? 6 : 4, y === 2.31 ? 48 : 32),
+      rimMat,
+      [0, y, 0],
+    );
     item.rotation.x = Math.PI / 2;
     item.castShadow = false;
     item.renderOrder = 7;

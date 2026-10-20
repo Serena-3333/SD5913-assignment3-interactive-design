@@ -18,7 +18,7 @@ export function createUI(root) {
      "",
    )}</div><div class="collection-bottom"><span class="doodle-flower">${flower}</span><span>One of each.<br>Room for three.</span><span class="little-sprout">${icon("leaf")}</span></div></aside><button id="collection-open" class="collection-open" type="button" aria-label="Open plants and preferences" aria-controls="plant-collection" aria-expanded="true" hidden>${icon("leaf")}Plants</button></div>
  <section class="terrarium-column" aria-labelledby="terrarium-title"><div class="scene-heading"><div><span class="small-kicker">YOUR LITTLE WORLD</span><h2 id="terrarium-title">Room to grow<span>!</span></h2></div><span id="plant-count" class="count-sticker">0 / 3</span></div>
- <div id="scene-container" class="scene-container"><span class="scene-spark spark-one" aria-hidden="true">✧</span><span class="scene-spark spark-two" aria-hidden="true">✳</span><div id="placement-preview" class="placement-preview" role="status" hidden></div><div id="scene-empty" class="scene-empty"><p>Little plants.<br>Big possibilities.</p></div><button id="camera-reset" class="camera-reset icon-button" type="button" title="Reset view" aria-label="Reset view">${icon("rotate")}</button><span class="orbit-hint">${icon("rotate")}Drag the view</span><div id="scene-loading" class="scene-loading">Making a little room for nature…</div></div>
+ <div id="scene-container" class="scene-container"><span class="scene-spark spark-one" aria-hidden="true">✧</span><span class="scene-spark spark-two" aria-hidden="true">✳</span><div id="placement-preview" class="placement-preview" role="status" hidden></div><button id="camera-reset" class="camera-reset icon-button" type="button" title="Reset view" aria-label="Reset view">${icon("rotate")}</button><span class="orbit-hint">${icon("rotate")}Drag the view</span><div id="scene-loading" class="scene-loading">Making a little room for nature…</div></div>
  <div class="tool-dock"><div class="tool-buttons"><button id="water-button" type="button" class="tool-button water-tool" aria-pressed="false">${icon("can")}Water</button><button id="lamp-button" type="button" class="tool-button lamp-tool" aria-pressed="false">${icon("lamp")}Light</button></div><p id="tool-hint">Drag the can or lamp to experiment.</p><button id="tool-close" class="icon-button" type="button" title="Put tool away" aria-label="Put tool away" hidden>${icon("close")}</button></div>
  <div id="lamp-controls" class="lamp-controls" hidden>${[
    ["azimuth", "Orbit", -180, 180, 1],
@@ -79,7 +79,6 @@ export function createUI(root) {
       "aria-valuenow",
       Math.round(state.soilMoisture),
     );
-    $("#scene-empty").hidden = state.plants.length > 0 || !!selected || !!tool;
     $("#next-day").disabled = state.plants.length < 2 || busy;
     $("#next-day").title =
       state.plants.length < 2 ? "Add two plants to begin" : "";

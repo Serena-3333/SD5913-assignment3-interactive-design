@@ -8,9 +8,9 @@ const palettes = {
 };
 const up = new THREE.Vector3(0, 1, 0),
   axis = new THREE.Vector3(1, 0, 0);
-const sphere = new THREE.IcosahedronGeometry(1, 1),
+const sphere = new THREE.DodecahedronGeometry(1, 0),
   smallStone = new THREE.DodecahedronGeometry(1, 0),
-  stemGeometry = new THREE.CylinderGeometry(1, 1, 1, 6);
+  stemGeometry = new THREE.CylinderGeometry(1, 1, 1, 4);
 // A closed, thick blade with a raised midrib. The root is at x=0, tip at x=1.
 function bladeGeometry(wide = false) {
   const w = wide ? 0.35 : 0.21;
@@ -24,9 +24,12 @@ function bladeGeometry(wide = false) {
     [0.45, wide ? 0.105 : 0.15, 0],
     [0.45, -0.07, 0],
   ];
+  // Thin fern blades need fewer outline vertices than broad Fittonia leaves.
+  if (!wide) points.splice(1, 5, [0.5, 0.035, -w], [1, 0, 0], [0.5, 0.035, w]);
+  const ring = points.length - 2;
   const faces = [];
-  for (let i = 0; i < 6; i++) {
-    faces.push(6, (i + 1) % 6, i, 7, i, (i + 1) % 6);
+  for (let i = 0; i < ring; i++) {
+    faces.push(ring, (i + 1) % ring, i, ring + 1, i, (i + 1) % ring);
   }
   const positions = faces.flatMap((i) => points[i]);
   const geometry = new THREE.BufferGeometry();
@@ -147,9 +150,9 @@ export function createPlant(species, { ghost = false } = {}) {
       }
     }
   } else if (species === "fern") {
-    for (let i = 0; i < 8; i++) {
+    for (let i = 0; i < 6; i++) {
       const frond = new THREE.Group();
-      frond.rotation.y = (i * Math.PI * 2) / 8 + 0.2;
+      frond.rotation.y = (i * Math.PI * 2) / 6 + 0.2;
       root.add(frond);
       const h = [1.1, 1.45, 1.25, 1.58, 1.28, 1.42, 1.1, 1.52][i],
         reach = [0.73, 0.57, 0.76, 0.45, 0.7, 0.62, 0.8, 0.5][i];
@@ -159,9 +162,9 @@ export function createPlant(species, { ghost = false } = {}) {
         new THREE.Vector3(reach * 0.45, h * 1.04, 0),
         new THREE.Vector3(reach, h, 0),
       );
-      mesh(new THREE.TubeGeometry(curve, 12, 0.012, 5, false), stemMat, frond);
-      for (let j = 1; j <= 8; j++) {
-        const t = j / 9,
+      mesh(new THREE.TubeGeometry(curve, 8, 0.012, 4, false), stemMat, frond);
+      for (let j = 1; j <= 7; j++) {
+        const t = j / 8,
           p = curve.getPoint(t),
           length = 0.27 * Math.sin(Math.PI * t) ** 0.7 + 0.025;
         for (const side of [-1, 1]) {
@@ -173,7 +176,7 @@ export function createPlant(species, { ghost = false } = {}) {
             0.23,
             0,
             i + j,
-            i >= 6 && j <= 2,
+            i >= 5 && j <= 2,
           );
           pivot.quaternion.setFromUnitVectors(
             axis,
@@ -247,9 +250,9 @@ export function createPlant(species, { ghost = false } = {}) {
         mesh(
           new THREE.TubeGeometry(
             new THREE.CatmullRomCurve3(ridge),
-            8,
-            0.005,
             4,
+            0.005,
+            3,
             false,
           ),
           vein,

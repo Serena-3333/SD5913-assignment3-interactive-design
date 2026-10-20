@@ -479,21 +479,6 @@ h3 {
   font-size: 22px;
   color: #b5c48a;
 }
-.scene-empty {
-  position: absolute;
-  z-index: 2;
-  left: 46%;
-  top: 35%;
-  text-align: center;
-  transform: translate(-50%, -50%) rotate(-4deg);
-  pointer-events: none;
-}
-.scene-empty p {
-  font-family: Fredoka, sans-serif;
-  font-size: 21px;
-  line-height: 1.15;
-  color: #9ab58b;
-}
 .orbit-hint {
   position: absolute;
   bottom: 10px;
@@ -1322,13 +1307,6 @@ dialog p {
   }
   .scene-container {
     height: 340px;
-  }
-  .scene-empty p {
-    font-size: 17px;
-  }
-  .scene-empty {
-    top: 38%;
-    left: 45%;
   }
   .spark-one {
     left: 4%;

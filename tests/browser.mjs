@@ -159,6 +159,7 @@ try {
     "illustrated UI, four unique live-model thumbnails and empty experiment",
     async () => {
       assert.equal(await page.locator("canvas").count(), 1);
+      assert.equal(await page.locator("#scene-empty").count(), 0);
       const src = await page
         .locator(".plant-thumbnail")
         .evaluateAll((imgs) => imgs.map((i) => (i.naturalWidth ? i.src : "")));

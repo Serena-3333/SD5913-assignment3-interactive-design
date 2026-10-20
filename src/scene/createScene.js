@@ -18,7 +18,7 @@ export function createScene(container, getState) {
       alpha: true,
       powerPreference: "high-performance",
     });
-  renderer.setPixelRatio(Math.min(devicePixelRatio, 1.25));
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
   renderer.setClearColor(0xf9f5dc, 0);
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.autoUpdate = false;
@@ -64,7 +64,7 @@ export function createScene(container, getState) {
   key.shadow.bias = -0.0002;
   scene.add(key);
   const ground = new THREE.Mesh(
-    new THREE.PlaneGeometry(100, 100),
+    new THREE.PlaneGeometry(8, 8),
     new THREE.ShadowMaterial({ opacity: 0.12 }),
   );
   ground.rotation.x = -Math.PI / 2;
@@ -96,8 +96,7 @@ export function createScene(container, getState) {
     frame = 0,
     until = 0,
     alive = true,
-    last = performance.now(),
-    recentFrameTimes = [];
+    last = performance.now();
   const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
   const target = new THREE.Vector3();
   function invalidate(duration = 350) {
@@ -150,28 +149,7 @@ export function createScene(container, getState) {
     frame = 0;
     if (!alive || document.hidden) return;
     const frameTime = now - last;
-    // Reduce only the 3D drawing resolution when sustained frames are slow.
-    // Long idle/background gaps are excluded; DOM text remains at full resolution.
-    if (frameTime < 200 && frameTime > 0) {
-      recentFrameTimes.push(frameTime);
-      if (recentFrameTimes.length >= 12) {
-        const average =
-          recentFrameTimes.reduce((sum, t) => sum + t, 0) /
-          recentFrameTimes.length;
-        const ratio = renderer.getPixelRatio();
-        const nextRatio =
-          average > 45
-            ? Math.min(ratio, 0.85)
-            : average > 28
-              ? Math.min(ratio, 1)
-              : ratio;
-        if (nextRatio !== ratio) {
-          renderer.setPixelRatio(nextRatio);
-          resize();
-        }
-        recentFrameTimes.length = 0;
-      }
-    }
+    // Keep drawing resolution stable, including during slow frames and gestures.
     const dt = Math.min(frameTime / 1000, 0.05),
       alpha = reducedMotion ? 1 : 1 - Math.exp(-dt * 10);
     last = now;

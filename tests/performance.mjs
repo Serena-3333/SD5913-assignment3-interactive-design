@@ -49,6 +49,7 @@ try {
     frames.sort((a, b) => a - b);
     return {
       pixelRatio: w.renderer.getPixelRatio(),
+      expectedPixelRatio: Math.min(devicePixelRatio, 2),
       drawCalls: w.renderer.info.render.calls,
       triangles: w.renderer.info.render.triangles,
       meshes,
@@ -59,13 +60,18 @@ try {
     };
   });
   if (label !== "before") {
+    assert.equal(
+      report.pixelRatio,
+      report.expectedPixelRatio,
+      "Slow frames must not reduce image clarity",
+    );
     assert.ok(
       report.drawCalls < 150,
       "Plant batching keeps the representative scene below 150 draws",
     );
     assert.ok(
-      report.triangles > 10000,
-      "The detailed plant and jar geometry remains present",
+      report.triangles >= 5000 && report.triangles < 10000,
+      "Simplified models retain the miniature scene within its geometry budget",
     );
   }
   await mkdir("test-results", { recursive: true });
@@ -73,6 +79,7 @@ try {
     `test-results/performance-${label}.json`,
     JSON.stringify(report, null, 2),
   );
+  await page.screenshot({ path: `test-results/clarity-${label}.png` });
   console.log(label, report);
 } finally {
   await browser.close();

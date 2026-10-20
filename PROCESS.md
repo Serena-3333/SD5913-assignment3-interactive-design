@@ -64,3 +64,11 @@ Record actual feedback, evidence, and resulting changes here. Do not substitute 
 - Replaced immediate collection hiding with a 1.4-second pause and a 420 ms slide, retaining a narrow Plants tab. The canvas resizes after the slide rather than reallocating its drawing buffer on every animation frame. Reopening/Reset cancels pending timers; reduced-motion preferences skip the slide. Hovering or using keys in the collection cancels pending automatic closure.
 - Kept the page within the viewport, with compact notes for short windows and a drawer for narrow windows. Fixed control-row occupancy after a real drag check exposed that newly revealed controls moved the soil target during a gesture.
 - Passed all 18 simulation tests, 22 real-browser acceptance checks, the seven-size layout/animated-drawer workflow and the representative rendering-budget check. Inspected expanded, collapsed, sliding, short-window and mobile frames and regenerated application screenshots. Production build succeeds. No student user-testing results are claimed.
+
+## Clarity correction · 2026-10-20
+
+- The user reported blur after adaptive resolution optimization. Removed that behavior and restored a stable device pixel ratio capped at 2. Slow frames no longer reduce the drawing-buffer resolution.
+- Reduced the representative three-plant scene from 12,854 to 8,270 triangles by simplifying small blades, stems, veins, soil subdivisions, gravel and secondary rims. Preserved the broad leaf shapes, plant heights, main rim and curved glass wall. Restricted the shadow floor to the local scene. Instancing, cached shadows and idle/background suspension remain active.
+- Removed the “Little plants. Big possibilities.” text and its unused styling from the empty jar.
+- The Retina benchmark measured 83 draws, a stable ratio of 2 and a 50 ms median frame interval in headless Chromium. This restores four times the pixels of the prior adaptive benchmark with an explicit sharpness/performance tradeoff, recorded in docs/performance.md.
+- Passed the 18 simulation checks, all 22 browser acceptance checks, production build and the Retina slow-frame clarity/budget regression. Inspected the actual 2880 × 1800 capture and regenerated application screenshots. No JavaScript or WebGL errors were observed in the browser workflow.

@@ -55,7 +55,7 @@ Lamp geometry, spotlight, footprint and numeric light calculation share the same
 - `src/scene/plantFactory.js`: four procedural models, thick custom leaf geometry, growth/health poses and shared-model thumbnails.
 - `src/scene/terrarium.js`: faceted terrain, continuous soil sides, gravel and stylized Fresnel glass.
 - `src/scene/lamp.js`, `wateringCan.js`, `footprint.js`: articulated tools, real spotlight, target footprints and water animation.
-- `src/scene/createScene.js`: renderer/camera and animation; cached shadows, idle/background suspension and adaptive 3D resolution.
+- `src/scene/createScene.js`: renderer/camera and animation; cached shadows, idle/background suspension and stable device-resolution rendering.
 - `src/scene/meshBatching.js`: instanced leaves/veins and merged static gravel; original plant pivots drive growth and health.
 - `src/interactions/plantDrag.js`: raycasting, plant/water/lamp gestures, cancellation and alternatives.
 - `src/ui/`, `src/styles/main.css`, `src/styles/desk.css`: paper panels, delayed sliding drawer, right-side day controls and viewport-fitted layout.
@@ -66,6 +66,6 @@ Lamp geometry, spotlight, footprint and numeric light calculation share the same
 
 The latest refinement used the **3dviz-pro-max** object, material, lighting and inspection guidance with custom Three.js geometry/shaders; no catalog kit or external model was used. Supplied references were visual guidance only. Locally bundled fonts retain their OFL licenses.
 
-The paper-desk refinement preserves model triangles while batching repeated leaves, veins and gravel. A representative Moss/Fittonia/Fern scene dropped from 375 to 85 draw calls at the same 1440 × 900 viewport. Shadows update when objects/light change; hover no longer raycasts needlessly. The renderer caps pixel ratio at 1.25 and can lower only the 3D drawing resolution to 1 or 0.85 on sustained slow frames. HTML text stays sharp. Frame timings from headless Chromium are diagnostic, not a promised frame rate on every Mac. See [the performance comparison](docs/performance.md).
+The paper-desk refinement batches repeated leaves, veins and gravel, caches shadows and avoids unused hover raycasts. The clarity revision reduces the representative Moss/Fittonia/Fern scene from 12,854 to 8,270 triangles while keeping the glass opening smooth. Rendering now stays at the device pixel ratio (capped at 2), including during slow frames; it no longer automatically lowers canvas resolution. The empty-jar slogan has been removed. Frame timings from headless Chromium are diagnostic, not a promised frame rate on every Mac. See [the performance comparison](docs/performance.md).
 
 Safari, Firefox, physical touch devices, older-Mac performance and real student usability sessions remain unverified. This simplified ecology omits moisture diffusion, leaf/root competition, physical fluids and calibrated plant-care science. There is no persistence: reload begins a fresh experiment.
