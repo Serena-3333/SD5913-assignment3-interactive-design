@@ -1,123 +1,122 @@
 import { SPECIES, SLOTS } from "../simulation/species.js";
 import { conditionsFor } from "../simulation/simulation.js";
 import { icon } from "./icons.js";
-
+const flower =
+  '<svg viewBox="0 0 60 60" fill="none" aria-hidden="true"><path d="M30 21C18 1 2 20 20 30 0 43 20 59 30 40c12 20 29 0 10-10 20-12 1-30-10-9Z" fill="currentColor"/><circle cx="30" cy="30" r="7" fill="#fff4c9"/></svg>';
 export function createUI(root) {
   root.innerHTML = `
-    <header class="masthead">
-      <a class="brand" href="./" aria-label="Pocket Terrarium home">${icon("jar", "brand-icon")}<div><h1>Pocket Terrarium</h1><p>A Tiny World Shaped by Your Choices</p></div></a>
-      <div class="masthead-note"><span class="eyebrow">An interactive botanical study</span><p>A small space for curiosity.</p></div>
-    </header>
-    <main class="workspace">
-      <aside class="collection panel" aria-labelledby="collection-title">
-        <h2 id="collection-title">Plant Collection</h2><p class="section-description">Drag a plant into your terrarium.</p>
-        <div class="eyebrow collection-eyebrow">Your botanical collection</div>
-        <div class="plant-grid">${Object.entries(SPECIES)
-          .map(
-            ([id, s]) => `
-          <button class="plant-card" data-species="${id}" aria-label="Select ${s.name}" aria-pressed="false" type="button">
-            <span class="grip" aria-hidden="true">⠿</span><img class="plant-thumbnail" alt="Procedural 3D ${s.name}" draggable="false" />
-            <strong>${s.name}</strong><span class="plant-availability">Available ↗</span>
-            <span class="preferences"><span title="Water preference: ${s.water.join("–")}">${icon("drop")}Water: ${s.waterLabel}</span><span title="Light preference: ${s.light.join("–")}">${icon("sun")}Light: ${s.lightLabel}</span></span>
-          </button>`,
-          )
-          .join("")}</div>
-        <div class="collection-hint">${icon("hand")}<div><strong>Pick up a little possibility.</strong><p>Drag to a planting spot.<br>Or select, then click a spot.</p></div></div>
-        <p class="collection-footnote">One of each. Room for three.</p>
-      </aside>
-      <section class="terrarium-column" aria-labelledby="terrarium-title">
-        <div class="scene-heading"><div><h2 id="terrarium-title">The Terrarium</h2><p class="section-description">A little world, in your hands.</p></div><span id="plant-count" class="mini-label">0 / 3 planted</span></div>
-        <div id="scene-container" class="scene-container">
-          <div class="lamp-control"><label for="lamp-slider">Drag lamp to adjust light <span>↔</span></label><input id="lamp-slider" type="range" min="-1.8" max="1.8" step="0.02" value="1.7" aria-label="Lamp horizontal position" /></div>
-          <div id="placement-preview" class="placement-preview" role="status" hidden></div>
-          <div class="scene-empty" id="scene-empty"><span class="eyebrow">A world of possibilities</span><p>Every little world<br>begins with a plant.</p></div>
-          <button id="water-button" class="scene-water text-button" type="button">${icon("drop")}Click to water <span>+18</span></button>
-          <button id="camera-reset" class="camera-reset text-button" type="button" aria-label="Reset camera view" title="Reset camera view">${icon("rotate")}</button>
-          <div id="scene-loading" class="scene-loading">Growing your little world…</div>
-        </div>
-        <div class="scene-instructions">${icon("rotate")}<span>Drag to rotate view</span><span class="instruction-dot">·</span><span>Scroll to zoom</span></div>
-        <div class="slot-picker" aria-label="Planting spots">${SLOTS.map((s, i) => `<button type="button" data-slot="${i}" class="slot-button"><span>${i + 1}</span>${s.name}</button>`).join("")}</div>
-        <p id="selection-help" class="selection-help" role="status">Choose two plants to begin your experiment.</p>
-        <div class="day-controls"><div class="day-counter"><span class="eyebrow">Your experiment</span><strong id="day-number">Day 01</strong></div><button id="next-day" class="primary-button" type="button" disabled><span>Next Day</span>${icon("arrow")}</button><button id="reset-button" class="text-button reset-button" type="button">${icon("reset")}Reset Experiment</button></div>
-      </section>
-      <aside class="environment-column" aria-labelledby="environment-title">
-        <div class="environment panel"><h2 id="environment-title">Environment</h2>
-          <section class="moisture-section"><div class="moisture-heading"><span>${icon("drop")}Soil Moisture</span><strong><span id="moisture-number">60</span>%</strong></div><div class="meter moisture-meter" role="meter" aria-label="Soil moisture" aria-valuemin="0" aria-valuemax="100" aria-valuenow="60"><div id="moisture-fill" style="width:60%"></div></div><p>One shared soil. A changing balance.</p></section>
-          <section class="conditions-section"><div class="conditions-heading"><h3>Plant Conditions</h3><span class="live-label"><i></i>Live</span></div><div id="plant-conditions"></div><p class="conditions-note"><strong>Comfort</strong> responds as you adjust.<br><strong>Health</strong> updates after Next Day.</p></section>
-          <section class="journal" aria-labelledby="journal-title"><h3 id="journal-title">${icon("leaf")}Observation Journal</h3><span id="journal-day" class="eyebrow">Day 1 · A fresh beginning</span><p id="journal-entry">An empty jar, a little light, and room to explore. Choose your first plants and see what feels right.</p></section>
-        </div><button id="clear-button" class="text-button clear-button" type="button">${icon("trash")}<span>Clear Jar</span></button>
-      </aside>
-    </main>
-    <footer><span>You shape the environment. The plants respond.</span><span class="eyebrow">Choose → Place → Rotate → Adjust → Observe</span></footer>
-    <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
-    <div id="drag-cursor" class="drag-cursor" hidden><img alt=""/><span></span></div>
-    <dialog id="confirm-dialog"><form method="dialog"><span class="eyebrow">A moment to pause</span><h2 id="confirm-title"></h2><p id="confirm-description"></p><div class="dialog-actions"><button class="secondary-button" value="cancel">Keep exploring</button><button id="confirm-action" class="primary-button" value="confirm">Reset</button></div></form></dialog>`;
-
+ <header class="masthead"><a class="brand" href="./" aria-label="Pocket Terrarium home"><span class="brand-sticker">${icon("jar")}</span><div><h1>Pocket Terrarium<span class="title-spark">✳</span></h1><p>A tiny world shaped by your choices.</p></div></a><details class="help-menu"><summary>${icon("hand")}A little help</summary><div><strong>Make yourself a little garden.</strong><p>Drag a plant into the jar. Drag the can to water a patch. Move the lamp and aim its light. Add two plants, then try Next Day.</p><p>Click a tool, then a spot for an alternative to dragging. Esc cancels.</p></div></details></header>
+ <main class="workspace">
+ <aside class="collection paper-panel"><div class="panel-title"><span class="title-leaf">${icon("leaf")}</span><h2>Pick a plant</h2></div><p class="section-note">A little of this. A little of that.</p><div class="plant-grid">${Object.entries(
+   SPECIES,
+ )
+   .map(
+     ([id, s], i) =>
+       `<button type="button" data-species="${id}" class="plant-card plant-${id}" aria-label="Select ${s.name}" aria-pressed="false"><span class="card-check" aria-hidden="true">✓</span><img class="plant-thumbnail" alt="3D ${s.name}" draggable="false"/><strong>${s.name}</strong><span class="preferences"><span title="Preferred moisture">${icon("drop")}${s.water.join("–")}</span><span title="Preferred light">${icon("sun")}${s.light.join("–")}</span></span><span class="plant-availability" hidden>Available</span></button>`,
+   )
+   .join(
+     "",
+   )}</div><div class="collection-bottom"><span class="doodle-flower">${flower}</span><span>One of each.<br>Room for three.</span><span class="little-sprout">${icon("leaf")}</span></div></aside>
+ <section class="terrarium-column" aria-labelledby="terrarium-title"><div class="scene-heading"><div><span class="small-kicker">YOUR LITTLE WORLD</span><h2 id="terrarium-title">Room to grow<span>!</span></h2></div><span id="plant-count" class="count-sticker">0 / 3</span></div>
+ <div id="scene-container" class="scene-container"><span class="scene-spark spark-one" aria-hidden="true">✧</span><span class="scene-spark spark-two" aria-hidden="true">✳</span><div id="placement-preview" class="placement-preview" role="status" hidden></div><div id="scene-empty" class="scene-empty"><p>Little plants.<br>Big possibilities.</p></div><button id="camera-reset" class="camera-reset icon-button" type="button" title="Reset view" aria-label="Reset view">${icon("rotate")}</button><span class="orbit-hint">${icon("rotate")}Drag the view</span><div id="scene-loading" class="scene-loading">Making a little room for nature…</div></div>
+ <div class="tool-dock"><div class="tool-buttons"><button id="water-button" type="button" class="tool-button water-tool" aria-pressed="false">${icon("can")}Water</button><button id="lamp-button" type="button" class="tool-button lamp-tool" aria-pressed="false">${icon("lamp")}Light</button></div><p id="tool-hint">Drag the can or lamp to experiment.</p><button id="tool-close" class="icon-button" type="button" title="Put tool away" aria-label="Put tool away" hidden>${icon("close")}</button></div>
+ <div id="lamp-controls" class="lamp-controls" hidden>${[
+   ["azimuth", "Orbit", -180, 180, 1],
+   ["reach", "Reach", 0, 1.45, 0.01],
+   ["radius", "Beam", 0.3, 1.15, 0.01],
+   ["power", "Power", 0, 100, 1],
+ ]
+   .map(
+     ([key, label, min, max, step]) =>
+       `<label for="lamp-${key}"><span>${label}<output id="lamp-${key}-value"></output></span><input id="lamp-${key}" type="range" min="${min}" max="${max}" step="${step}" data-lamp="${key}" aria-label="Lamp ${label.toLowerCase()}"/></label>`,
+   )
+   .join("")}</div>
+ <div class="slot-picker" aria-label="Planting and tool spots" hidden>${SLOTS.map((s, i) => `<button type="button" data-slot="${i}" class="slot-button" aria-label="${s.name}"><span>${i + 1}</span>${["Front left", "Front right", "Back"][i]}</button>`).join("")}</div><p id="selection-help" class="selection-help" role="status" hidden></p>
+ <div class="day-controls"><div class="day-counter"><span>Little by little</span><strong id="day-number">Day 01</strong></div><button id="next-day" type="button" class="primary-button" disabled><span>Next Day</span>${icon("arrow")}</button><div class="reset-actions"><button id="reset-button" type="button" class="icon-button" aria-label="Reset experiment" title="Reset experiment">${icon("reset")}</button><button id="clear-button" type="button" class="icon-button" aria-label="Clear jar" title="Clear jar">${icon("trash")}</button></div></div></section>
+ <aside class="environment-column"><section class="environment paper-panel" aria-labelledby="environment-title"><div class="panel-title"><span class="title-sun">${icon("sun")}</span><h2 id="environment-title">Feeling good?</h2></div><div class="moisture-section"><div class="moisture-heading"><span>${icon("drop")}Soil average</span><strong><span id="moisture-number">60</span><small>%</small></strong></div><div class="meter moisture-meter" role="meter" aria-label="Average soil moisture" aria-valuemin="0" aria-valuemax="100" aria-valuenow="60"><div id="moisture-fill" style="width:60%"></div></div></div><div id="plant-conditions"></div><span class="health-note">${icon("heart")}Health changes with the days.</span></section><section class="journal paper-panel" aria-labelledby="journal-title"><div class="journal-tape"></div><h3 id="journal-title">${icon("leaf")}Little observations</h3><span id="journal-day">DAY 01</span><p id="journal-entry">Choose a plant. Find its happy place.</p><span class="journal-stamp" aria-hidden="true">GROW<br>WITH<br>CARE</span></section></aside>
+ </main><div id="toast" class="toast" role="status" aria-live="polite" hidden></div><div id="drag-cursor" class="drag-cursor" hidden><img alt=""/><span></span></div><dialog id="confirm-dialog"><form method="dialog"><span class="dialog-flower">${flower}</span><h2 id="confirm-title"></h2><p id="confirm-description"></p><div class="dialog-actions"><button type="submit" class="secondary-button" value="cancel">Keep growing</button><button id="confirm-action" type="submit" class="primary-button" value="confirm">Reset</button></div></form></dialog>`;
   const $ = (selector) => root.querySelector(selector);
-  let selected = null;
-  let toastTimer;
-  let pendingConfirmation;
-  const numberAnimations = new Map();
-  let numericFrame = 0;
-  const observed = new WeakMap();
-  const history = [];
+  let selected = null,
+    tool = null,
+    toastTimer,
+    pendingConfirmation,
+    numberFrame = 0;
+  const observed = new WeakMap(),
+    animations = new Map();
   function animateNumber(element, value) {
+    value = Math.round(value);
     if (observed.get(element) === value) return;
     observed.set(element, value);
-    numberAnimations.set(element, {
+    animations.set(element, {
       from: Number(element.textContent) || 0,
       to: value,
       start: performance.now(),
     });
-    if (!numericFrame) numericFrame = requestAnimationFrame(tickNumbers);
+    if (!numberFrame) numberFrame = requestAnimationFrame(tick);
   }
-  function tickNumbers(now) {
-    for (const [element, animation] of numberAnimations) {
-      const t = Math.min((now - animation.start) / 260, 1);
-      element.textContent = Math.round(
-        animation.from + (animation.to - animation.from) * (1 - (1 - t) ** 3),
-      );
-      if (t === 1) numberAnimations.delete(element);
+  function tick(now) {
+    for (const [e, a] of animations) {
+      const t = Math.min((now - a.start) / 220, 1);
+      e.textContent = Math.round(a.from + (a.to - a.from) * (1 - (1 - t) ** 3));
+      if (t === 1) animations.delete(e);
     }
-    numericFrame = numberAnimations.size
-      ? requestAnimationFrame(tickNumbers)
-      : 0;
+    numberFrame = animations.size ? requestAnimationFrame(tick) : 0;
   }
   function render(state, busy = false) {
     $("#day-number").textContent = `Day ${String(state.day).padStart(2, "0")}`;
-    $("#plant-count").textContent = `${state.plants.length} / 3 planted`;
+    $("#plant-count").textContent = `${state.plants.length} / 3`;
     animateNumber($("#moisture-number"), state.soilMoisture);
     $("#moisture-fill").style.width = `${state.soilMoisture}%`;
-    $(".moisture-meter").setAttribute("aria-valuenow", state.soilMoisture);
-    $("#lamp-slider").value = state.lampPosition.x;
-    $("#scene-empty").hidden = state.plants.length > 0 || !!selected;
+    $(".moisture-meter").setAttribute(
+      "aria-valuenow",
+      Math.round(state.soilMoisture),
+    );
+    $("#scene-empty").hidden = state.plants.length > 0 || !!selected || !!tool;
     $("#next-day").disabled = state.plants.length < 2 || busy;
-    $("#next-day span").textContent = busy ? "A new day…" : "Next Day";
-    $("#reset-button").disabled = busy;
-    $("#clear-button").disabled = busy;
-    $("#water-button").disabled = busy;
-    $("#lamp-slider").disabled = busy;
+    $("#next-day").title =
+      state.plants.length < 2 ? "Add two plants to begin" : "";
+    $("#next-day span").textContent = busy ? "Growing…" : "Next Day";
+    for (const id of [
+      "reset-button",
+      "clear-button",
+      "water-button",
+      "lamp-button",
+    ])
+      $("#" + id).disabled = busy;
     $(".workspace").classList.toggle("advancing", busy);
-    for (const [id, species] of Object.entries(SPECIES)) {
-      const card = $(`[data-species="${id}"]`);
-      const planted = state.plants.some((p) => p.species === id);
+    for (const [id, s] of Object.entries(SPECIES)) {
+      const card = $(`[data-species="${id}"]`),
+        planted = state.plants.some((p) => p.species === id);
       card.classList.toggle("planted", planted);
       card.classList.toggle("selected", selected === id);
       card.setAttribute("aria-pressed", String(selected === id));
-      card.disabled = planted || busy;
+      card.disabled = busy;
       card.querySelector(".plant-availability").textContent = planted
-        ? "✓ Planted"
+        ? "Planted"
         : selected === id
-          ? "Placing…"
-          : "Available ↗";
+          ? "Placing"
+          : "Available";
+    }
+    for (const key of ["azimuth", "reach", "radius", "power"]) {
+      const input = $("#lamp-" + key);
+      input.value = state.lamp[key];
+      input.disabled = busy;
+      $("#lamp-" + key + "-value").textContent =
+        key === "azimuth"
+          ? `${Math.round(state.lamp[key])}°`
+          : key === "reach"
+            ? `${Math.round((state.lamp[key] / 1.45) * 100)}%`
+            : key === "radius"
+              ? state.lamp[key].toFixed(2)
+              : `${Math.round(state.lamp[key])}%`;
     }
     const conditions = $("#plant-conditions");
-    for (const element of [...conditions.querySelectorAll(".condition-card")])
-      if (!state.plants.some((p) => p.species === element.dataset.condition))
-        element.remove();
+    for (const e of [...conditions.querySelectorAll(".condition-card")])
+      if (!state.plants.some((p) => p.species === e.dataset.condition))
+        e.remove();
     conditions.querySelector(".conditions-empty")?.remove();
     if (!state.plants.length)
-      conditions.innerHTML = `<div class="conditions-empty">${icon("leaf")}<p>Something lovely could grow here.</p><span>Plant a little possibility to see<br>how it feels in your world.</span></div>`;
+      conditions.innerHTML = `<div class="conditions-empty"><span class="empty-sprout">${icon("leaf")}</span><strong>A little life goes a long way.</strong><p>Your plants’ feelings appear here.</p></div>`;
     for (const plant of state.plants) {
       const c = conditionsFor(state, plant);
       let card = conditions.querySelector(
@@ -127,7 +126,7 @@ export function createUI(root) {
         card = document.createElement("article");
         card.className = "condition-card";
         card.dataset.condition = plant.species;
-        card.innerHTML = `<h4>${SPECIES[plant.species].name}<i></i></h4><div class="condition-values"><div class="comfort-value"><div><span>Live Comfort</span><strong><b>0</b>%</strong></div><div class="meter"><div></div></div><span class="status-badge"></span></div><div class="health-value"><span>Health</span><strong></strong></div></div><div class="condition-detail"><span class="light-value"></span><span class="growth-value"></span></div>`;
+        card.innerHTML = `<div class="condition-top"><h4>${SPECIES[plant.species].name}</h4><div class="comfort-value"><span>Comfort</span><strong><b>0</b>%</strong></div></div><div class="meter"><div></div></div><div class="condition-middle"><span class="status-badge"></span><span class="health-value" title="Health updates after Next Day">${icon("heart")}<strong>70</strong></span></div><div class="local-values"><span class="water-value" title="Moisture here">${icon("drop")}<b></b><small>%</small></span><span class="light-value" title="Light here">${icon("sun")}<b></b></span><span class="growth-value" title="Growth">${icon("leaf")}<b></b><small>%</small></span></div>`;
         conditions.append(card);
       }
       card.dataset.status =
@@ -137,36 +136,31 @@ export function createUI(root) {
             ? "adjust"
             : "stressed";
       animateNumber(card.querySelector(".comfort-value b"), c.percent);
-      card.querySelector(".comfort-value .meter div").style.width =
-        `${c.percent}%`;
+      card.querySelector(".meter div").style.width = `${c.percent}%`;
       card.querySelector(".status-badge").textContent =
-        (c.comfort >= 0.8 ? "✓ " : "") + c.status;
+        c.comfort >= 0.8
+          ? "Happy here"
+          : c.comfort >= 0.55
+            ? "A little adjustment"
+            : "Feeling stressed";
       card.querySelector(".health-value strong").textContent = plant.health;
-      card.querySelector(".health-value").title = "Updates after Next Day";
-      card.querySelector(".light-value").textContent =
-        `Light ${Math.round(c.light)}`;
-      card.querySelector(".growth-value").textContent =
-        `Growth ${plant.growth}%`;
+      card.querySelector(".water-value b").textContent = Math.round(c.moisture);
+      card.querySelector(".light-value b").textContent = Math.round(c.light);
+      card.querySelector(".growth-value b").textContent = plant.growth;
     }
-    for (const button of root.querySelectorAll("[data-slot]")) {
-      const plant = state.plants.find(
-        (p) => p.slot === Number(button.dataset.slot),
-      );
-      button.title = plant
-        ? `${SPECIES[plant.species].name} · ${SLOTS[plant.slot].name}`
-        : SLOTS[button.dataset.slot].name;
-      button.classList.toggle("occupied", !!plant);
-      button.disabled = busy;
-      button.setAttribute(
+    for (const b of root.querySelectorAll("[data-slot]")) {
+      const p = state.plants.find((p) => p.slot === Number(b.dataset.slot));
+      b.title = p
+        ? `${SPECIES[p.species].name} · ${SLOTS[p.slot].name}`
+        : SLOTS[b.dataset.slot].name;
+      b.classList.toggle("occupied", !!p);
+      b.disabled = busy;
+      b.setAttribute(
         "aria-label",
-        `${SLOTS[button.dataset.slot].name}${plant ? `, ${SPECIES[plant.species].name}` : ", empty"}`,
+        `${SLOTS[b.dataset.slot].name}${p ? `, ${SPECIES[p.species].name}` : ", empty"}`,
       );
     }
-    if (!selected)
-      $("#selection-help").textContent =
-        state.plants.length < 2
-          ? "Choose two plants to begin your experiment."
-          : "A change today. A little discovery tomorrow.";
+    $(".slot-picker").hidden = !selected && !tool;
   }
   $("#confirm-dialog").addEventListener("close", () => {
     if ($("#confirm-dialog").returnValue === "confirm") pendingConfirmation?.();
@@ -176,40 +170,62 @@ export function createUI(root) {
     $,
     render,
     thumbnails(images) {
-      for (const [id, image] of Object.entries(images))
-        $(`[data-species="${id}"] img`).src = image;
+      for (const [id, url] of Object.entries(images))
+        $(`[data-species="${id}"] img`).src = url;
     },
     select(id) {
       selected = id;
+      $("#selection-help").hidden = !id;
       $("#selection-help").textContent = id
-        ? `${SPECIES[id].name} selected · click a spot below, or a ring inside the jar. Esc to cancel.`
+        ? `${SPECIES[id].name} · choose a spot`
         : "";
+    },
+    tool(value) {
+      tool = value;
+      $("#water-button").classList.toggle("active", value === "water");
+      $("#lamp-button").classList.toggle("active", value === "lamp");
+      $("#water-button").setAttribute(
+        "aria-pressed",
+        String(value === "water"),
+      );
+      $("#lamp-button").setAttribute("aria-pressed", String(value === "lamp"));
+      $("#lamp-controls").hidden = value !== "lamp";
+      $("#tool-close").hidden = !value;
+      $("#tool-hint").textContent =
+        value === "water"
+          ? "Drag the can. Water just one patch."
+          : value === "lamp"
+            ? "Drag the lamp. Drag the light spot to aim."
+            : "Drag the can or lamp to experiment.";
     },
     toast(message) {
       clearTimeout(toastTimer);
       $("#toast").textContent = message;
       $("#toast").hidden = false;
-      toastTimer = setTimeout(() => {
-        $("#toast").hidden = true;
-      }, 3200);
+      toastTimer = setTimeout(() => ($("#toast").hidden = true), 2300);
     },
     journal(state, message) {
-      history.unshift({ day: state.day, message });
-      history.length = Math.min(history.length, 30);
       $("#journal-day").textContent =
-        `Day ${state.day} · ${history.length === 1 ? "A fresh beginning" : "Field notes"}`;
+        `DAY ${String(state.day).padStart(2, "0")}`;
       $("#journal-entry").textContent = message;
     },
-    clearJournal() {
-      history.length = 0;
-    },
+    clearJournal() {},
     preview(species, slot, percent, position) {
-      const element = $("#placement-preview");
-      element.hidden = slot < 0;
+      const e = $("#placement-preview");
+      e.hidden = slot < 0;
       if (slot >= 0) {
-        element.innerHTML = `<strong>${SPECIES[species].name} · ${percent}% comfort</strong><span>${SLOTS[slot].name} · release to plant</span>`;
-        element.style.left = `${Math.max(100, Math.min($("#scene-container").clientWidth - 110, position.x))}px`;
-        element.style.top = `${Math.max(110, position.y - 115)}px`;
+        e.innerHTML = `<strong>${SPECIES[species].name}<span>${percent}% comfort</span></strong>`;
+        e.style.left = `${Math.max(95, Math.min($("#scene-container").clientWidth - 100, position.x))}px`;
+        e.style.top = `${Math.max(70, position.y - 100)}px`;
+      }
+    },
+    waterPreview(valid, position) {
+      const e = $("#placement-preview");
+      e.hidden = !valid;
+      if (valid) {
+        e.innerHTML = "<strong>A little rain, right here.</strong>";
+        e.style.left = `${Math.max(100, Math.min($("#scene-container").clientWidth - 110, position.x))}px`;
+        e.style.top = `${Math.max(55, position.y - 60)}px`;
       }
     },
     hidePreview() {
@@ -218,21 +234,19 @@ export function createUI(root) {
     confirm(kind, action) {
       pendingConfirmation = action;
       $("#confirm-title").textContent =
-        kind === "clear"
-          ? "Make room for a new world?"
-          : "Begin this experiment again?";
+        kind === "clear" ? "A whole new garden?" : "Back to day one?";
       $("#confirm-description").textContent =
         kind === "clear"
-          ? "This removes all plants and returns the jar, water, light, and day to their starting state."
-          : "Your plants stay in their spots. Day, moisture, light, health, and growth return to their starting values.";
+          ? "All plants, water and light will reset."
+          : "Keep your plants and their spots. Reset water, light, health and growth.";
       $("#confirm-action").textContent =
-        kind === "clear" ? "Clear Jar" : "Reset Experiment";
+        kind === "clear" ? "Clear jar" : "Start again";
       $("#confirm-dialog").returnValue = "";
       $("#confirm-dialog").showModal();
     },
     dispose() {
       clearTimeout(toastTimer);
-      cancelAnimationFrame(numericFrame);
+      cancelAnimationFrame(numberFrame);
     },
   };
 }

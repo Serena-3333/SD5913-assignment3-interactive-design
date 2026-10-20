@@ -34,8 +34,8 @@ export const SPECIES = Object.freeze({
 });
 
 export const SLOTS = Object.freeze([
-  { name: "Front Left", x: -1, z: 0.6 },
-  { name: "Front Right", x: 1, z: 0.6 },
-  { name: "Back Center", x: 0, z: -0.9 },
+  { name: "Front Left", x: -0.55, z: 0.43 },
+  { name: "Front Right", x: 0.54, z: 0.32 },
+  { name: "Back Center", x: -0.04, z: -0.52 },
 ]);
-export const INITIAL_LAMP = Object.freeze({ x: 1.7, z: -1.8 });
+export { INITIAL_LAMP } from "./environment.js";

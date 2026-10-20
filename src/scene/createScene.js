@@ -1,7 +1,8 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { SLOTS } from "../simulation/species.js";
-import { createTerrarium, SOIL_Y } from "./terrarium.js";
+import { CAMERA, surfaceHeight } from "../simulation/environment.js";
+import { createTerrarium } from "./terrarium.js";
 import {
   createPlant,
   animatePlant,
@@ -10,158 +11,198 @@ import {
 } from "./plantFactory.js";
 import { createLamp } from "./lamp.js";
 import { createWateringCan } from "./wateringCan.js";
-
 export function createScene(container, getState) {
-  const scene = new THREE.Scene();
-  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.75));
-  renderer.setClearColor(0xf3f0e7, 0);
+  const scene = new THREE.Scene(),
+    renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 1.75));
+  renderer.setClearColor(0xf9f5dc, 0);
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 0.98;
+  renderer.toneMappingExposure = 1.03;
   const thumbnails = createThumbnails(renderer);
   container.prepend(renderer.domElement);
   renderer.domElement.setAttribute(
     "aria-label",
-    "Interactive 3D terrarium. Drag empty space to rotate; drag plants to move; drag the lamp head to adjust light.",
+    "3D terrarium. Drag plants to move, the can to water, the lamp to position it, and empty space to rotate.",
   );
-  const camera = new THREE.PerspectiveCamera(33, 1, 0.1, 80);
-  camera.position.set(2.4, 4.4, 7.5);
+  const camera = new THREE.PerspectiveCamera(CAMERA.fov, 1, 0.1, 40);
+  camera.position.set(...CAMERA.position);
   const controls = new OrbitControls(camera, renderer.domElement);
-  controls.target.set(0.15, 1.65, 0);
+  controls.target.set(...CAMERA.target);
   controls.enableDamping = true;
-  controls.dampingFactor = 0.07;
+  controls.dampingFactor = 0.08;
   controls.enablePan = false;
-  controls.minDistance = 7;
-  controls.maxDistance = 12;
-  controls.minPolarAngle = 0.42;
-  controls.maxPolarAngle = Math.PI / 2 - 0.1;
+  controls.minDistance = 6;
+  controls.maxDistance = 11;
+  controls.minPolarAngle = 0.4;
+  controls.maxPolarAngle = Math.PI / 2 - 0.12;
   controls.update();
   controls.saveState();
-  scene.add(new THREE.HemisphereLight(0xfffbed, 0x839076, 1.9));
-  const key = new THREE.DirectionalLight(0xfffaf0, 2.6);
-  key.position.set(-3, 7, 5);
+  const hemisphere = new THREE.HemisphereLight(0xfffce8, 0x6c9776, 2.0);
+  scene.add(hemisphere);
+  const key = new THREE.DirectionalLight(0xfffaf0, 2.4);
+  key.position.set(-3, 6, 4);
   key.castShadow = true;
   key.shadow.mapSize.set(1024, 1024);
   Object.assign(key.shadow.camera, {
-    left: -5,
-    right: 5,
-    top: 5,
-    bottom: -5,
+    left: -3.5,
+    right: 3.5,
+    top: 3.5,
+    bottom: -3.5,
     near: 0.1,
-    far: 20,
+    far: 14,
   });
-  key.shadow.normalBias = 0.035;
+  key.shadow.normalBias = 0.02;
   key.shadow.bias = -0.0002;
-  key.shadow.radius = 4;
   scene.add(key);
   const ground = new THREE.Mesh(
-    new THREE.PlaneGeometry(200, 200),
-    new THREE.ShadowMaterial({ opacity: 0.075 }),
+    new THREE.PlaneGeometry(100, 100),
+    new THREE.ShadowMaterial({ opacity: 0.12 }),
   );
   ground.rotation.x = -Math.PI / 2;
   ground.receiveShadow = true;
   scene.add(ground);
-  const terrarium = createTerrarium(scene);
-  const lamp = createLamp(scene);
-  const wateringCan = createWateringCan(scene);
-  const plants = new Map();
-  let ghost = null;
-  let hiddenSpecies = null;
-  let frame;
-  let last = performance.now();
-  let elapsed = 0;
-  let alive = true;
-  const dry = new THREE.Color(0xbfa577),
-    wet = new THREE.Color(0x70543a);
-  let selectedSlot = -1;
-  let choosing = false;
-
+  const floor = new THREE.Mesh(
+    new THREE.CircleGeometry(2.5, 64),
+    new THREE.MeshBasicMaterial({
+      color: 0xe5eab2,
+      transparent: true,
+      opacity: 0.5,
+      depthWrite: false,
+    }),
+  );
+  floor.rotation.x = -Math.PI / 2;
+  floor.position.y = -0.006;
+  floor.scale.set(1, 0.78, 1);
+  scene.add(floor);
+  const terrarium = createTerrarium(scene),
+    lamp = createLamp(scene),
+    wateringCan = createWateringCan(scene),
+    plants = new Map();
+  let ghost = null,
+    hiddenSpecies = null,
+    selectedSlot = -1,
+    choosing = false,
+    tool = null,
+    lastField = null,
+    frame = 0,
+    until = 0,
+    alive = true,
+    last = performance.now();
+  const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const target = new THREE.Vector3();
+  function invalidate(duration = 1400) {
+    until = Math.max(until, performance.now() + duration);
+    if (!frame && alive) frame = requestAnimationFrame(tick);
+  }
+  controls.addEventListener("change", () => invalidate(250));
   function sync() {
     const state = getState();
-    for (const [species, model] of plants) {
+    for (const [species, model] of plants)
       if (!state.plants.some((p) => p.species === species)) {
         disposePlant(model);
         plants.delete(species);
       }
-    }
-    for (const plant of state.plants) {
+    for (const plant of state.plants)
       if (!plants.has(plant.species)) {
-        const model = createPlant(plant.species);
-        model.position.set(SLOTS[plant.slot].x, SOIL_Y, SLOTS[plant.slot].z);
+        const model = createPlant(plant.species),
+          p = SLOTS[plant.slot];
+        model.position.set(p.x, surfaceHeight(p.x, p.z), p.z);
         scene.add(model);
         plants.set(plant.species, model);
       }
+    lamp.update(state.lamp);
+    if (lastField !== state.moisture) {
+      terrarium.updateSoil(state);
+      lastField = state.moisture;
     }
-    lamp.update(state.lampPosition);
+    invalidate();
   }
-
   function resize() {
     const { width, height } = container.getBoundingClientRect();
+    if (!width || !height) return;
     renderer.setSize(width, height, false);
     camera.aspect = width / height;
-    // Preserve horizontal breathing room for the lamp and can on narrow screens.
     camera.fov = THREE.MathUtils.radToDeg(
       2 *
         Math.atan(
-          Math.tan(THREE.MathUtils.degToRad(33) / 2) *
-            Math.max(1, 1.35 / camera.aspect),
+          Math.tan(THREE.MathUtils.degToRad(CAMERA.fov) / 2) *
+            Math.max(1, 1.3 / camera.aspect),
         ),
     );
     camera.updateProjectionMatrix();
+    invalidate();
   }
   const observer = new ResizeObserver(resize);
   observer.observe(container);
   resize();
   function tick(now) {
+    frame = 0;
     if (!alive) return;
-    const dt = Math.min((now - last) / 1000, 0.05);
-    elapsed += dt;
+    const dt = Math.min((now - last) / 1000, 0.05),
+      alpha = reducedMotion ? 1 : 1 - Math.exp(-dt * 10);
     last = now;
-    const alpha = 1 - Math.exp(-dt * 9);
     const state = getState();
-    const targetSoil = dry.clone().lerp(wet, state.soilMoisture / 100);
-    terrarium.soilMaterial.color.lerp(targetSoil, alpha);
     for (const plant of state.plants) {
       const model = plants.get(plant.species);
       if (!model) continue;
-      const slot = SLOTS[plant.slot];
-      model.position.lerp(new THREE.Vector3(slot.x, SOIL_Y, slot.z), alpha);
+      const p = SLOTS[plant.slot];
+      target.set(p.x, surfaceHeight(p.x, p.z), p.z);
+      model.position.lerp(target, alpha);
       model.visible = plant.species !== hiddenSpecies;
       animatePlant(model, plant, alpha);
     }
     terrarium.markers.forEach((marker, i) => {
       const occupied = state.plants.some((p) => p.slot === i);
-      marker.material.color.set(i === selectedSlot ? 0xb9dd86 : 0xf3ebcf);
+      marker.material.color.set(i === selectedSlot ? 0xd7f589 : 0xffe5a0);
       marker.material.opacity =
-        i === selectedSlot ? 0.95 : occupied && !choosing ? 0.12 : 0.5;
+        i === selectedSlot
+          ? 0.95
+          : occupied && !choosing
+            ? 0.04
+            : choosing
+              ? 0.7
+              : 0.3;
     });
-    wateringCan.animate(elapsed);
+    wateringCan.animate(now / 1000, alpha);
     controls.update();
     renderer.render(scene, camera);
-    frame = requestAnimationFrame(tick);
+    if (now < until || wateringCan.pouring || wateringCan.moving)
+      frame = requestAnimationFrame(tick);
   }
   sync();
-  frame = requestAnimationFrame(tick);
-
   return {
-    renderer,
     scene,
+    renderer,
     camera,
     controls,
     plants,
+    terrarium,
     lamp,
     wateringCan,
     thumbnails,
     sync,
-    pour() {
-      wateringCan.pour(elapsed);
+    invalidate,
+    studioLights: [hemisphere, key],
+    setTool(value) {
+      tool = value;
+      lamp.setActive(value === "lamp");
+      invalidate();
+    },
+    pour(point) {
+      wateringCan.pour(point, performance.now() / 1000);
+      invalidate(2200);
+    },
+    waterPreview(point) {
+      wateringCan.preview(point);
+      invalidate();
     },
     highlight(slot, isChoosing = false) {
       selectedSlot = slot;
       choosing = isChoosing;
+      invalidate();
     },
     preview(species, slot, health = 70, growth = 20) {
       if (ghost?.userData.species !== species) {
@@ -171,11 +212,15 @@ export function createScene(container, getState) {
         scene.add(ghost);
       }
       ghost.visible = slot >= 0;
-      if (slot >= 0)
-        ghost.position.set(SLOTS[slot].x, SOIL_Y + 0.02, SLOTS[slot].z);
+      if (slot >= 0) {
+        const p = SLOTS[slot];
+        ghost.position.set(p.x, surfaceHeight(p.x, p.z) + 0.015, p.z);
+      }
+      invalidate();
     },
     hideSpecies(species) {
       hiddenSpecies = species;
+      invalidate();
     },
     clearPreview() {
       if (ghost) {
@@ -184,9 +229,12 @@ export function createScene(container, getState) {
       }
       hiddenSpecies = null;
       selectedSlot = -1;
+      wateringCan.cancel();
+      invalidate();
     },
     resetCamera() {
       controls.reset();
+      invalidate();
     },
     project(point) {
       const p = point.clone().project(camera);
@@ -200,14 +248,16 @@ export function createScene(container, getState) {
       cancelAnimationFrame(frame);
       observer.disconnect();
       controls.dispose();
-      scene.traverse((object) => {
-        if (object.geometry) object.geometry.dispose();
-        if (object.material)
-          for (const m of Array.isArray(object.material)
-            ? object.material
-            : [object.material])
-            m.dispose();
+      const geometries = new Set(),
+        materials = new Set();
+      scene.traverse((o) => {
+        if (o.geometry) geometries.add(o.geometry);
+        if (o.material)
+          for (const m of Array.isArray(o.material) ? o.material : [o.material])
+            materials.add(m);
       });
+      geometries.forEach((g) => g.dispose());
+      materials.forEach((m) => m.dispose());
       renderer.dispose();
       renderer.domElement.remove();
     },

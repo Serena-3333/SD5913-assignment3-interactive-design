@@ -37,3 +37,13 @@ No user testing has been conducted. Suggested session: invite 3–5 students to 
 ## Changes after testing (pending)
 
 Record actual feedback, evidence, and resulting changes here. Do not substitute automated checks for user research.
+
+## Spatial / illustrated refinement · 2026-10-20
+
+- Used the user-invoked 3dviz-pro-max skill: read object reasoning/craft, lighting direction/scale, visual review and frame-inspection guidance. Created custom procedural geometry and materials; did not retrieve or claim a catalog kit.
+- Changed the visual direction to pear green, butter yellow and turquoise paper shapes, thick rounded strokes, locally bundled Fredoka typography, and contextual tool controls. Removed repeated guidance and long journal text.
+- Reduced jar dimensions and tightened planting positions. Added an uneven terrain surface connected to the soil sides, layered gravel, stones and a branch. Differentiated plant height and volume, replaced primitive leaves with closed faceted geometry, and used restrained Fresnel glass plus broad highlights.
+- Replaced the shared water scalar with a spatial sample field. Drag watering has a visible 0.55-unit footprint, bounded local changes and per-plant readouts. Water remains at world coordinates after a plant swap. The can lifts above the rim before crossing into the jar.
+- Added a shared lamp frame for its base, arm, head, real spotlight and numeric cone. Orbit, reach, aim, beam width and power are independent controls. Escape restores an uncommitted lamp gesture. Camera motion changes no ecological state.
+- Passed 16 updated simulation checks and 22 real-browser acceptance checks. A camera-invariance assertion was adjusted from bitwise floating-point equality to a 0.00001 position tolerance to account for residual OrbitControls damping.
+- Inspected overview, water preview, orbit, isolated-light and light-off frames. Source isolation prompted a final correction to custom-leaf face winding; corrected surfaces were re-inspected. Also seated tool bases and connected terrain edges. These checks do not constitute student usability testing.

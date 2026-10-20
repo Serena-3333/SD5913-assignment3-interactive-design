@@ -1,137 +1,169 @@
 import * as THREE from "three";
 import { SLOTS, SPECIES } from "../simulation/species.js";
-import { comfortFor, lightAt } from "../simulation/simulation.js";
-import { SOIL_Y } from "../scene/terrarium.js";
-
+import { SOIL_RADIUS, surfaceHeight } from "../simulation/environment.js";
+import { conditionsFor } from "../simulation/simulation.js";
 export function createInteractions(
   world,
   ui,
   { getState, isBusy, onPlace, onLamp, onWater },
 ) {
-  const canvas = world.renderer.domElement;
-  const raycaster = new THREE.Raycaster();
-  const soilPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -SOIL_Y);
-  const lampPlane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 1.8);
-  const controller = new AbortController();
-  const signal = controller.signal;
+  const canvas = world.renderer.domElement,
+    raycaster = new THREE.Raycaster(),
+    lampPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -2.95),
+    controller = new AbortController(),
+    { signal } = controller;
   let selected = null,
+    tool = null,
     drag = null,
     currentSlot = -1;
   const cursor = ui.$("#drag-cursor");
-
-  function pointerRay(event) {
-    const rect = canvas.getBoundingClientRect();
+  function ray(event) {
+    const r = canvas.getBoundingClientRect();
     raycaster.setFromCamera(
       new THREE.Vector2(
-        ((event.clientX - rect.left) / rect.width) * 2 - 1,
-        (-(event.clientY - rect.top) / rect.height) * 2 + 1,
+        ((event.clientX - r.left) / r.width) * 2 - 1,
+        (-(event.clientY - r.top) / r.height) * 2 + 1,
       ),
       world.camera,
     );
     return (
-      event.clientX >= rect.left &&
-      event.clientX <= rect.right &&
-      event.clientY >= rect.top &&
-      event.clientY <= rect.bottom
+      event.clientX >= r.left &&
+      event.clientX <= r.right &&
+      event.clientY >= r.top &&
+      event.clientY <= r.bottom
     );
   }
-  function slotUnderPointer(event, moving = false) {
-    if (!pointerRay(event)) return -1;
-    const p = raycaster.ray.intersectPlane(soilPlane, new THREE.Vector3());
-    if (!p || Math.hypot(p.x, p.z) > 2.02) return -1;
-    let nearest = -1,
-      distance = Infinity;
+  function soilPoint(event) {
+    if (!ray(event)) return null;
+    const hit = raycaster.intersectObject(world.terrarium.soilSurface)[0];
+    if (!hit || Math.hypot(hit.point.x, hit.point.z) > SOIL_RADIUS - 0.005)
+      return null;
+    return { x: hit.point.x, z: hit.point.z };
+  }
+  function slotUnder(event, moving = false) {
+    const p = soilPoint(event);
+    if (!p) return -1;
+    let slot = -1,
+      distance = 0.68;
     for (let i = 0; i < SLOTS.length; i++) {
-      if (!moving && getState().plants.some((plant) => plant.slot === i))
-        continue;
+      if (!moving && getState().plants.some((p) => p.slot === i)) continue;
       const d = Math.hypot(p.x - SLOTS[i].x, p.z - SLOTS[i].z);
       if (d < distance) {
         distance = d;
-        nearest = i;
+        slot = i;
       }
     }
-    return distance < 1.05 ? nearest : -1;
+    return slot;
   }
   function pick(event) {
-    pointerRay(event);
-    const objects = [
-      ...world.plants.values(),
-      world.lamp.head,
-      world.wateringCan.group,
-    ];
-    const hit = raycaster.intersectObjects(objects, true)[0];
+    if (!ray(event)) return null;
+    const hit = raycaster.intersectObjects(
+      [
+        ...world.plants.values(),
+        world.lamp.head,
+        world.wateringCan.group,
+        world.lamp.aimHandle,
+      ],
+      true,
+    )[0];
     if (!hit) return null;
-    let object = hit.object;
-    while (object) {
-      if (object.userData.species)
-        return { kind: "plant", species: object.userData.species };
-      if (object.userData.kind) return { kind: object.userData.kind };
-      object = object.parent;
+    let o = hit.object;
+    while (o) {
+      if (o.userData.species)
+        return { kind: "plant", species: o.userData.species };
+      if (o.userData.kind) return { kind: o.userData.kind };
+      o = o.parent;
     }
     return null;
   }
-  function select(species) {
-    selected = species;
-    ui.select(species);
-    world.highlight(-1, !!species);
+  function redraw() {
     ui.render(getState(), isBusy());
   }
-  function clearTransient() {
+  function select(id) {
+    selected = id;
+    ui.select(id);
+    world.highlight(-1, !!id);
+    redraw();
+  }
+  function setTool(value, toggle = true) {
+    if (drag) return;
+    tool = toggle && tool === value ? null : value;
+    select(null);
+    ui.tool(tool);
+    world.setTool(tool);
+    redraw();
+  }
+  function clear() {
     world.clearPreview();
     ui.hidePreview();
     cursor.hidden = true;
     world.controls.enabled = true;
     currentSlot = -1;
+    canvas.style.cursor = "grab";
   }
-  function cancel(message = false) {
-    const had = drag || selected;
+  function cancel(notify = false) {
+    const had = drag || selected || tool;
+    if (drag?.originalLamp) onLamp(drag.originalLamp, false);
     drag = null;
-    clearTransient();
+    clear();
+    tool = null;
+    ui.tool(null);
+    world.setTool(null);
     select(null);
-    if (message && had)
-      ui.toast("Placement cancelled. Your little world is unchanged.");
+    if (notify && had) ui.toast("Cancelled. Nothing planted or watered.");
   }
-  function begin(event, kind, species = null, moving = false) {
+  function begin(event, kind, extra = {}) {
     drag = {
       kind,
-      species,
-      moving,
+      id: event.pointerId,
       startX: event.clientX,
       startY: event.clientY,
       active: false,
-      id: event.pointerId,
+      ...extra,
     };
     world.controls.enabled = false;
     canvas.style.cursor = "grabbing";
   }
-  function showPlacement(event, species, moving) {
-    currentSlot = slotUnderPointer(event, moving);
+  function plantPreview(event) {
+    currentSlot = slotUnder(event, drag.moving);
     world.highlight(currentSlot, true);
-    const plant = getState().plants.find((p) => p.species === species);
-    world.preview(species, currentSlot, plant?.health, plant?.growth);
+    const p = getState().plants.find((p) => p.species === drag.species);
+    world.preview(drag.species, currentSlot, p?.health, p?.growth);
     if (currentSlot >= 0) {
-      const slot = SLOTS[currentSlot];
-      const percent = Math.round(
-        comfortFor(
-          species,
-          getState().soilMoisture,
-          lightAt(getState().lampPosition, slot),
-        ) * 100,
-      );
+      const s = SLOTS[currentSlot],
+        c = conditionsFor(getState(), {
+          species: drag.species,
+          slot: currentSlot,
+        });
       ui.preview(
-        species,
+        drag.species,
         currentSlot,
-        percent,
-        world.project(new THREE.Vector3(slot.x, SOIL_Y + 0.6, slot.z)),
+        c.percent,
+        world.project(
+          new THREE.Vector3(s.x, surfaceHeight(s.x, s.z) + 0.3, s.z),
+        ),
       );
       cursor.hidden = true;
     } else {
       ui.hidePreview();
       cursor.hidden = false;
-      cursor.querySelector("img").src = world.thumbnails[species];
-      cursor.querySelector("span").textContent = SPECIES[species].name;
+      cursor.querySelector("img").src = world.thumbnails[drag.species];
+      cursor.querySelector("span").textContent = SPECIES[drag.species].name;
       cursor.style.transform = `translate(${event.clientX + 12}px,${event.clientY - 55}px)`;
     }
+  }
+  function waterPreview(event) {
+    const p = soilPoint(event);
+    drag.point = p;
+    world.waterPreview(p);
+    if (p)
+      ui.waterPreview(
+        true,
+        world.project(
+          new THREE.Vector3(p.x, surfaceHeight(p.x, p.z) + 0.15, p.z),
+        ),
+      );
+    else ui.hidePreview();
   }
   for (const card of document.querySelectorAll("[data-species]")) {
     card.addEventListener(
@@ -139,15 +171,24 @@ export function createInteractions(
       (event) => {
         if (event.button !== 0 || isBusy() || card.disabled) return;
         event.preventDefault();
+        setTool(null, false);
         select(card.dataset.species);
-        begin(event, "plant", card.dataset.species, false);
+        begin(event, "plant", {
+          species: card.dataset.species,
+          moving: getState().plants.some(
+            (p) => p.species === card.dataset.species,
+          ),
+        });
       },
       { signal },
     );
     card.addEventListener(
       "click",
       (event) => {
-        if (event.detail === 0 && !isBusy()) select(card.dataset.species);
+        if (event.detail === 0 && !isBusy()) {
+          setTool(null, false);
+          select(card.dataset.species);
+        }
       },
       { signal },
     );
@@ -160,38 +201,54 @@ export function createInteractions(
         event.stopImmediatePropagation();
         return;
       }
-      const hit = pick(event);
-      // Capture phase prevents OrbitControls from starting a conflicting drag.
-      if (hit?.kind === "lamp") {
+      const hit = pick(event),
+        p = soilPoint(event);
+      function own() {
         event.stopImmediatePropagation();
         event.preventDefault();
-        begin(event, "lamp");
-        return;
       }
       if (hit?.kind === "water") {
-        event.stopImmediatePropagation();
-        event.preventDefault();
-        onWater();
+        own();
+        setTool("water", false);
+        begin(event, "water", { fromCan: true });
+        return;
+      }
+      if (hit?.kind === "lamp") {
+        own();
+        setTool("lamp", false);
+        begin(event, "lamp", {
+          originalLamp: structuredClone(getState().lamp),
+        });
+        return;
+      }
+      if (tool === "water" && p) {
+        own();
+        begin(event, "water", { fromCan: false });
+        waterPreview(event);
+        return;
+      }
+      if (tool === "lamp" && p) {
+        own();
+        begin(event, "aim", { originalLamp: structuredClone(getState().lamp) });
+        onLamp({ target: p }, false);
         return;
       }
       if (selected) {
-        event.stopImmediatePropagation();
-        event.preventDefault();
-        const slot = slotUnderPointer(
+        own();
+        const slot = slotUnder(
           event,
           getState().plants.some((p) => p.species === selected),
         );
         if (slot >= 0) {
-          const species = selected;
+          const id = selected;
           cancel();
-          onPlace(species, slot);
-        } else ui.toast("Choose an empty planting ring inside the soil.");
+          onPlace(id, slot);
+        } else ui.toast("Choose a planting spot.");
         return;
       }
       if (hit?.kind === "plant") {
-        event.stopImmediatePropagation();
-        event.preventDefault();
-        begin(event, "plant", hit.species, true);
+        own();
+        begin(event, "plant", { species: hit.species, moving: true });
       }
     },
     { capture: true, signal },
@@ -201,11 +258,12 @@ export function createInteractions(
     (event) => {
       if (!drag) {
         if (event.target === canvas && !isBusy())
-          canvas.style.cursor = pick(event)
-            ? "grab"
-            : selected
+          canvas.style.cursor =
+            tool === "water" || tool === "lamp"
               ? "crosshair"
-              : "grab";
+              : pick(event)
+                ? "grab"
+                : "grab";
         return;
       }
       if (event.pointerId !== drag.id) return;
@@ -214,14 +272,32 @@ export function createInteractions(
         Math.hypot(event.clientX - drag.startX, event.clientY - drag.startY) > 5
       )
         drag.active = true;
+      if (drag.kind === "water") {
+        if (drag.active || !drag.fromCan) waterPreview(event);
+        return;
+      }
       if (!drag.active) return;
       if (drag.kind === "lamp") {
-        pointerRay(event);
-        const p = raycaster.ray.intersectPlane(lampPlane, new THREE.Vector3());
-        if (p) onLamp(p.x, false);
+        if (ray(event)) {
+          const p = raycaster.ray.intersectPlane(
+            lampPlane,
+            new THREE.Vector3(),
+          );
+          if (p)
+            onLamp(
+              {
+                azimuth: (Math.atan2(p.x, p.z) * 180) / Math.PI,
+                reach: 2.02 - Math.hypot(p.x, p.z),
+              },
+              false,
+            );
+        }
+      } else if (drag.kind === "aim") {
+        const p = soilPoint(event);
+        if (p) onLamp({ target: p }, false);
       } else {
         if (drag.moving) world.hideSpecies(drag.species);
-        showPlacement(event, drag.species, drag.moving);
+        plantPreview(event);
       }
     },
     { signal },
@@ -230,24 +306,31 @@ export function createInteractions(
     "pointerup",
     (event) => {
       if (!drag || event.pointerId !== drag.id) return;
-      const finished = drag;
-      drag = null;
+      const d = drag;
       const slot =
-        finished.active && finished.kind === "plant"
-          ? slotUnderPointer(event, finished.moving)
-          : -1;
-      clearTransient();
-      if (finished.kind === "lamp") {
-        if (finished.active) onLamp(getState().lampPosition.x, true);
+          d.active && d.kind === "plant" ? slotUnder(event, d.moving) : -1,
+        point =
+          d.kind === "water" && (d.active || !d.fromCan)
+            ? soilPoint(event)
+            : null;
+      drag = null;
+      clear();
+      if (d.kind === "water") {
+        select(null);
+        if (point) onWater(point);
+        else if (d.active)
+          ui.toast("Water stays in the jar. Try a soil patch.");
         return;
       }
-      if (finished.active) {
+      if (d.kind === "lamp" || d.kind === "aim") {
+        onLamp({}, true);
+        return;
+      }
+      if (d.active) {
         select(null);
-        if (slot >= 0) onPlace(finished.species, slot);
-        else
-          ui.toast("Drop inside a planting ring. Your plants are unchanged.");
-      } else select(finished.species);
-      canvas.style.cursor = "grab";
+        if (slot >= 0) onPlace(d.species, slot);
+        else ui.toast("Drop onto a planting spot.");
+      } else select(d.species);
     },
     { signal },
   );
@@ -255,36 +338,41 @@ export function createInteractions(
   window.addEventListener("blur", () => cancel(), { signal });
   window.addEventListener(
     "keydown",
-    (event) => {
-      if (event.key === "Escape") cancel(true);
+    (e) => {
+      if (e.key === "Escape") cancel(true);
     },
     { signal },
   );
-  for (const button of document.querySelectorAll("[data-slot]")) {
+  for (const button of document.querySelectorAll("[data-slot]"))
     button.addEventListener(
       "click",
       () => {
         if (isBusy()) return;
-        const slot = Number(button.dataset.slot);
+        const slot = Number(button.dataset.slot),
+          point = SLOTS[slot];
+        if (tool === "water") {
+          onWater(point);
+          return;
+        }
+        if (tool === "lamp") {
+          onLamp({ target: { x: point.x, z: point.z } }, true);
+          return;
+        }
         if (selected) {
-          const species = selected;
+          const id = selected;
           cancel();
-          onPlace(species, slot);
+          onPlace(id, slot);
         } else {
-          const plant = getState().plants.find((p) => p.slot === slot);
-          if (plant) {
-            select(plant.species);
-            ui.toast(
-              `${SPECIES[plant.species].name} selected. Choose another spot to move or swap.`,
-            );
-          } else ui.toast("Select a plant from the collection first.");
+          const p = getState().plants.find((p) => p.slot === slot);
+          if (p) select(p.species);
         }
       },
       { signal },
     );
-  }
   return {
     cancel,
+    setTool,
+    getTool: () => tool,
     dispose() {
       cancel();
       controller.abort();
