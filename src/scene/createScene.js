@@ -13,10 +13,16 @@ import { createLamp } from "./lamp.js";
 import { createWateringCan } from "./wateringCan.js";
 export function createScene(container, getState) {
   const scene = new THREE.Scene(),
-    renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-  renderer.setPixelRatio(Math.min(devicePixelRatio, 1.75));
+    renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: true,
+      powerPreference: "high-performance",
+    });
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 1.25));
   renderer.setClearColor(0xf9f5dc, 0);
   renderer.shadowMap.enabled = true;
+  renderer.shadowMap.autoUpdate = false;
+  renderer.shadowMap.needsUpdate = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -90,10 +96,11 @@ export function createScene(container, getState) {
     frame = 0,
     until = 0,
     alive = true,
-    last = performance.now();
+    last = performance.now(),
+    recentFrameTimes = [];
   const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
   const target = new THREE.Vector3();
-  function invalidate(duration = 1400) {
+  function invalidate(duration = 350) {
     until = Math.max(until, performance.now() + duration);
     if (!frame && alive) frame = requestAnimationFrame(tick);
   }
@@ -114,11 +121,12 @@ export function createScene(container, getState) {
         plants.set(plant.species, model);
       }
     lamp.update(state.lamp);
+    renderer.shadowMap.needsUpdate = true;
     if (lastField !== state.moisture) {
       terrarium.updateSoil(state);
       lastField = state.moisture;
     }
-    invalidate();
+    invalidate(1100);
   }
   function resize() {
     const { width, height } = container.getBoundingClientRect();
@@ -140,8 +148,31 @@ export function createScene(container, getState) {
   resize();
   function tick(now) {
     frame = 0;
-    if (!alive) return;
-    const dt = Math.min((now - last) / 1000, 0.05),
+    if (!alive || document.hidden) return;
+    const frameTime = now - last;
+    // Reduce only the 3D drawing resolution when sustained frames are slow.
+    // Long idle/background gaps are excluded; DOM text remains at full resolution.
+    if (frameTime < 200 && frameTime > 0) {
+      recentFrameTimes.push(frameTime);
+      if (recentFrameTimes.length >= 12) {
+        const average =
+          recentFrameTimes.reduce((sum, t) => sum + t, 0) /
+          recentFrameTimes.length;
+        const ratio = renderer.getPixelRatio();
+        const nextRatio =
+          average > 45
+            ? Math.min(ratio, 0.85)
+            : average > 28
+              ? Math.min(ratio, 1)
+              : ratio;
+        if (nextRatio !== ratio) {
+          renderer.setPixelRatio(nextRatio);
+          resize();
+        }
+        recentFrameTimes.length = 0;
+      }
+    }
+    const dt = Math.min(frameTime / 1000, 0.05),
       alpha = reducedMotion ? 1 : 1 - Math.exp(-dt * 10);
     last = now;
     const state = getState();
@@ -150,9 +181,11 @@ export function createScene(container, getState) {
       if (!model) continue;
       const p = SLOTS[plant.slot];
       target.set(p.x, surfaceHeight(p.x, p.z), p.z);
-      model.position.lerp(target, alpha);
+      const moving = model.position.distanceToSquared(target) > 0.00000001;
+      if (moving) model.position.lerp(target, alpha);
       model.visible = plant.species !== hiddenSpecies;
-      animatePlant(model, plant, alpha);
+      if (animatePlant(model, plant, alpha) || moving)
+        renderer.shadowMap.needsUpdate = true;
     }
     terrarium.markers.forEach((marker, i) => {
       const occupied = state.plants.some((p) => p.slot === i);
@@ -166,12 +199,18 @@ export function createScene(container, getState) {
               ? 0.7
               : 0.3;
     });
+    if (wateringCan.moving || wateringCan.pouring)
+      renderer.shadowMap.needsUpdate = true;
     wateringCan.animate(now / 1000, alpha);
     controls.update();
     renderer.render(scene, camera);
     if (now < until || wateringCan.pouring || wateringCan.moving)
       frame = requestAnimationFrame(tick);
   }
+  const onVisibility = () => {
+    if (!document.hidden) invalidate();
+  };
+  document.addEventListener("visibilitychange", onVisibility);
   sync();
   return {
     scene,
@@ -248,9 +287,11 @@ export function createScene(container, getState) {
       cancelAnimationFrame(frame);
       observer.disconnect();
       controls.dispose();
+      document.removeEventListener("visibilitychange", onVisibility);
       const geometries = new Set(),
         materials = new Set();
       scene.traverse((o) => {
+        if (o.isInstancedMesh) o.dispose();
         if (o.geometry) geometries.add(o.geometry);
         if (o.material)
           for (const m of Array.isArray(o.material) ? o.material : [o.material])

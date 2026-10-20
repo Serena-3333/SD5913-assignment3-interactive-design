@@ -1,0 +1,845 @@
+/* A fitted desk: paper drawers, a growing scene, and the day note on the right. */
+html,
+body {
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+#app {
+  height: 100dvh;
+  max-width: 1800px;
+  padding: 0 clamp(20px, 2.5vw, 40px) 18px;
+  display: flex;
+  flex-direction: column;
+}
+.masthead {
+  flex: 0 0 auto;
+  padding: 20px 3px 15px;
+}
+.brand-sticker {
+  width: 56px;
+  height: 59px;
+}
+.brand h1 {
+  font-size: clamp(25px, 2.4vw, 36px);
+}
+.workspace {
+  --collection-size: clamp(230px, 19vw, 270px);
+  display: grid;
+  grid-template-columns: var(--collection-size) minmax(0, 1fr) 286px;
+  gap: clamp(15px, 2vw, 28px);
+  flex: 1;
+  min-height: 0;
+  margin-top: 12px;
+  padding-top: 12px;
+  align-items: stretch;
+  position: relative;
+}
+.workspace.collection-collapsed {
+  grid-template-columns: 0 minmax(0, 1fr) 286px;
+}
+.collection-shell {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+}
+.paper-panel,
+.day-controls {
+  border: 0;
+  border-radius: 2px 5px 3px 1px;
+  box-shadow:
+    2px 5px 8px #66724720,
+    0 1px 0 #d2c99e;
+  background-image: radial-gradient(#a0ab7433 0.6px, transparent 0.8px);
+  background-size: 5px 5px;
+}
+.paper-panel::after,
+.day-controls::after {
+  content: "";
+  position: absolute;
+  bottom: -7px;
+  left: 0;
+  width: 100%;
+  height: 9px;
+  background: var(--note-color, #fff9df);
+  clip-path: polygon(
+    0 0,
+    100% 0,
+    100% 70%,
+    96% 40%,
+    91% 95%,
+    86% 55%,
+    80% 85%,
+    74% 45%,
+    68% 90%,
+    62% 50%,
+    56% 100%,
+    50% 60%,
+    44% 90%,
+    38% 45%,
+    32% 85%,
+    26% 60%,
+    20% 95%,
+    14% 45%,
+    8% 85%,
+    3% 55%,
+    0 80%
+  );
+  pointer-events: none;
+}
+.collection {
+  --note-color: #eff3c5;
+  width: var(--collection-size);
+  max-height: calc(100% - 8px);
+  padding: 24px 17px 18px;
+  transform: rotate(-0.5deg);
+  transform-origin: top left;
+  transition:
+    transform 420ms cubic-bezier(0.22, 0.7, 0.22, 1),
+    opacity 350ms;
+}
+.collection-closing .collection,
+.collection-opening .collection {
+  transform: translateX(calc(-100% - 45px)) rotate(-6deg) scaleX(0.9);
+  opacity: 0;
+  pointer-events: none;
+}
+.collection::before {
+  left: 34%;
+}
+.collection .panel-title h2 {
+  font-size: 24px;
+}
+.section-note {
+  margin: 9px 0 17px;
+}
+.plant-grid {
+  gap: 16px 12px;
+}
+.plant-card {
+  border: 0;
+  border-radius: 1px 4px 2px 1px;
+  box-shadow: 1px 3px 4px #7e8d5926;
+  padding: 8px 4px 11px;
+  background-image: linear-gradient(transparent 92%, #d5dcb177 92%);
+}
+.plant-card:nth-child(2) {
+  border-color: transparent;
+}
+.plant-card.selected {
+  box-shadow:
+    0 0 0 2px #9eb465,
+    2px 4px 5px #7e8d5928;
+}
+.plant-card::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  border: 6px solid transparent;
+  border-top-color: #e2e5b8;
+  border-right-color: #e2e5b8;
+}
+.plant-thumbnail {
+  height: clamp(80px, 13vh, 120px);
+  filter: none;
+}
+.plant-card strong {
+  font-size: 18px;
+}
+.collection-bottom {
+  margin-top: 21px;
+}
+.collection-open {
+  position: absolute;
+  top: 22px;
+  left: -25px;
+  width: 35px;
+  height: 124px;
+  padding: 12px 8px;
+  border: 0;
+  border-radius: 3px 2px 5px 1px;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  background: #dfe9a4;
+  box-shadow: -2px -3px 4px #72834324;
+  font-size: 14px;
+  gap: 10px;
+  z-index: 12;
+}
+.terrarium-column {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+  padding: 0;
+}
+.scene-heading {
+  padding: 0 10px;
+  flex-shrink: 0;
+}
+.scene-heading h2 {
+  font-size: clamp(28px, 3vw, 40px);
+}
+.scene-container,
+.collection-collapsed .scene-container {
+  flex: 1 1 0;
+  height: auto;
+  min-height: 140px;
+  margin-top: 0;
+}
+.tool-dock {
+  flex-shrink: 0;
+  margin: 8px 0 6px;
+  gap: 12px;
+}
+#tool-hint {
+  font-size: 11px;
+  max-width: 155px;
+  color: #879365;
+}
+.lamp-controls {
+  flex-shrink: 0;
+  margin: 10px 0 5px;
+  border: 0;
+  border-radius: 2px;
+  padding: 13px;
+  box-shadow: 1px 3px 5px #716f4520;
+}
+.slot-picker {
+  flex-shrink: 0;
+  margin: 10px auto 3px;
+}
+#selection-help {
+  flex-shrink: 0;
+  margin: 5px auto;
+}
+.environment-column {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  grid-column: auto;
+  gap: 26px;
+  padding: 0 2px 8px;
+}
+.environment {
+  --note-color: #fff9df;
+  padding: 24px 18px 16px;
+  transform: rotate(0.5deg);
+  flex: 0 1 auto;
+  min-height: 0;
+}
+.environment::before,
+.day-controls::before {
+  content: "";
+  position: absolute;
+  width: 64px;
+  height: 20px;
+  left: calc(50% - 32px);
+  top: -10px;
+  background: #b8cc8ac9;
+  transform: rotate(4deg);
+  clip-path: polygon(
+    3% 0,
+    97% 0,
+    100% 20%,
+    97% 45%,
+    100% 75%,
+    97% 100%,
+    0 100%,
+    3% 65%,
+    0 30%
+  );
+}
+.environment .panel-title h2 {
+  font-size: 26px;
+}
+.moisture-section {
+  margin: 18px 0 16px;
+  max-width: none;
+}
+.environment #plant-conditions {
+  display: block;
+}
+.condition-card {
+  position: relative;
+  padding: 10px 0 11px;
+  min-width: 0;
+}
+.condition-top h4 {
+  font-size: 19px;
+}
+.comfort-value strong {
+  font-size: 25px;
+}
+.local-values {
+  margin-top: 7px;
+}
+.health-note {
+  font-size: 10px;
+}
+.day-controls {
+  --note-color: #f4ecc5;
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 14px 8px;
+  margin: 0;
+  border: 0;
+  padding: 19px 18px 18px;
+  background-color: #f4ecc5;
+  transform: rotate(-0.7deg);
+  flex: 0 0 auto;
+}
+.day-controls::before {
+  background: #e7ca7cbf;
+  transform: rotate(-5deg);
+}
+.day-counter {
+  grid-column: 1;
+  grid-row: 1;
+}
+.day-counter > span {
+  font-size: 10px;
+}
+.day-counter strong {
+  font-size: 29px;
+}
+.reset-actions {
+  grid-column: 2;
+  grid-row: 1;
+  gap: 5px;
+}
+.reset-actions .icon-button {
+  background: #fff8df;
+  border: 0;
+  color: #a2ab72;
+  width: 29px;
+  height: 31px;
+}
+.day-controls > .primary-button {
+  grid-column: 1/-1;
+  width: 100%;
+  font-size: 18px;
+  padding: 11px 14px;
+  justify-content: space-between;
+}
+@media (max-height: 760px) {
+  .masthead {
+    padding: 12px 3px 7px;
+  }
+  .brand-sticker {
+    width: 46px;
+    height: 48px;
+  }
+  .workspace {
+    margin-top: 4px;
+  }
+  .collection {
+    padding: 20px 15px 13px;
+  }
+  .plant-thumbnail {
+    height: clamp(58px, 11vh, 83px);
+  }
+  .plant-grid {
+    gap: 12px;
+  }
+  .plant-card strong {
+    font-size: 16px;
+    margin-bottom: 6px;
+  }
+  .collection-bottom {
+    margin-top: 14px;
+  }
+  .environment-column {
+    gap: 21px;
+  }
+  .environment {
+    padding: 19px 16px 12px;
+  }
+  .environment .panel-title h2 {
+    font-size: 23px;
+  }
+  .moisture-section {
+    margin: 10px 0 9px;
+  }
+  .condition-card {
+    padding: 7px 0;
+  }
+  .condition-top h4 {
+    font-size: 17px;
+  }
+  .comfort-value strong {
+    font-size: 21px;
+  }
+  .condition-middle {
+    margin-top: 5px;
+  }
+  .status-badge {
+    padding: 2px 5px;
+    font-size: 9px;
+  }
+  .local-values {
+    margin-top: 5px;
+    font-size: 10px;
+  }
+  .health-note {
+    margin-top: 6px;
+    font-size: 9px;
+  }
+  .day-controls {
+    padding: 15px;
+    gap: 10px;
+  }
+  .day-counter strong {
+    font-size: 25px;
+  }
+  .day-controls > .primary-button {
+    padding: 9px 12px;
+    font-size: 16px;
+  }
+  .lamp-controls {
+    padding: 10px;
+    margin-top: 6px;
+  }
+}
+@media (min-width: 681px) and (max-width: 1100px) {
+  .workspace {
+    --collection-size: 215px;
+    grid-template-columns: var(--collection-size) minmax(0, 1fr) 252px;
+    gap: 18px;
+  }
+  .workspace.collection-collapsed {
+    grid-template-columns: 0 minmax(0, 1fr) 252px;
+  }
+  .panel-title h2,
+  .collection .panel-title h2 {
+    font-size: 21px;
+  }
+  .collection {
+    padding-inline: 12px;
+  }
+  .preferences {
+    font-size: 9px;
+    gap: 4px;
+  }
+  .tool-dock {
+    gap: 7px;
+    flex-wrap: wrap;
+  }
+  .tool-dock > p {
+    display: none;
+  }
+  .lamp-controls {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+@media (max-width: 680px) {
+  #app {
+    padding: 0 14px 12px;
+  }
+  .masthead {
+    padding: 12px 0 6px;
+    gap: 6px;
+  }
+  .brand {
+    gap: 9px;
+  }
+  .brand h1 {
+    font-size: 24px;
+  }
+  .brand p {
+    font-size: 9px;
+  }
+  .brand-sticker {
+    width: 38px;
+    height: 42px;
+  }
+  .help-menu summary {
+    padding: 7px;
+    font-size: 0;
+  }
+  .help-menu summary > .icon {
+    display: block;
+    width: 17px;
+    height: 17px;
+  }
+  .workspace,
+  .workspace.collection-collapsed {
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-rows: minmax(0, 1fr) auto;
+    gap: 16px;
+    --collection-size: 235px;
+  }
+  .collection-shell {
+    position: absolute;
+    left: 0;
+    top: 12px;
+    bottom: 0;
+    width: var(--collection-size);
+    z-index: 15;
+    pointer-events: none;
+  }
+  .collection {
+    pointer-events: auto;
+    max-height: calc(100% - 8px);
+    padding: 18px 14px;
+  }
+  .collection .section-note {
+    margin-bottom: 12px;
+  }
+  .collection .plant-thumbnail {
+    height: 58px;
+  }
+  .collection .plant-card {
+    padding: 5px 4px 8px;
+  }
+  .collection .plant-card strong {
+    font-size: 16px;
+  }
+  .collection .plant-grid {
+    gap: 12px;
+  }
+  .collection .preferences {
+    font-size: 9px;
+    gap: 3px;
+  }
+  .collection-bottom {
+    margin-top: 13px;
+    font-size: 10px;
+  }
+  .doodle-flower {
+    width: 28px;
+    height: 28px;
+  }
+  .collection-open {
+    pointer-events: auto;
+    left: -12px;
+    top: 55px;
+    width: 29px;
+    height: 110px;
+  }
+  .terrarium-column {
+    grid-column: 1;
+    grid-row: 1;
+    order: unset;
+    width: 100%;
+  }
+  .scene-heading {
+    padding: 0 2px;
+  }
+  .scene-heading h2 {
+    font-size: 27px;
+  }
+  .small-kicker {
+    font-size: 7px;
+  }
+  .count-sticker {
+    font-size: 11px;
+    padding: 8px;
+  }
+  .scene-container {
+    min-height: 120px;
+  }
+  .tool-dock {
+    gap: 8px;
+    margin: 4px 0;
+    min-height: 39px;
+  }
+  .tool-button {
+    font-size: 13px;
+    padding: 7px 10px;
+  }
+  .tool-button .icon {
+    width: 17px;
+    height: 17px;
+  }
+  .tool-dock > p {
+    display: none;
+  }
+  .lamp-controls {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    padding: 9px;
+    margin: 5px 0;
+  }
+  .lamp-controls label {
+    font-size: 10px;
+  }
+  .lamp-controls output {
+    font-size: 9px;
+  }
+  .lamp-controls input {
+    height: 11px;
+    margin-top: 4px;
+  }
+  .slot-picker {
+    margin: 4px 0;
+    gap: 6px;
+  }
+  .slot-button {
+    font-size: 9px;
+    padding: 5px 8px;
+  }
+  #selection-help {
+    display: none;
+  }
+  .environment-column {
+    grid-column: 1;
+    grid-row: 2;
+    order: unset;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 110px;
+    gap: 13px;
+    padding: 0 1px 6px;
+  }
+  .environment {
+    padding: 14px 12px 8px;
+  }
+  .environment .panel-title h2 {
+    font-size: 21px;
+  }
+  .environment .title-sun .icon {
+    width: 17px;
+    height: 17px;
+  }
+  .moisture-section {
+    margin: 7px 0;
+  }
+  .moisture-heading > span {
+    font-size: 10px;
+  }
+  .moisture-heading > strong {
+    font-size: 22px;
+  }
+  .moisture-meter {
+    margin-top: 3px;
+    height: 7px;
+  }
+  .condition-card {
+    padding: 5px 0;
+  }
+  .condition-top h4 {
+    font-size: 15px;
+  }
+  .comfort-value {
+    gap: 4px;
+  }
+  .comfort-value > span {
+    font-size: 8px;
+  }
+  .comfort-value strong {
+    font-size: 19px;
+  }
+  .condition-middle {
+    margin-top: 3px;
+  }
+  .condition-card > .meter {
+    margin-top: 3px;
+    height: 4px;
+  }
+  .status-badge {
+    font-size: 8px;
+    padding: 1px 4px;
+  }
+  .health-value {
+    font-size: 10px;
+  }
+  .local-values {
+    font-size: 9px;
+    margin-top: 4px;
+  }
+  .local-values .icon {
+    width: 10px;
+    height: 10px;
+  }
+  .local-values small {
+    font-size: 8px;
+  }
+  .health-note {
+    display: none;
+  }
+  .conditions-empty {
+    padding: 12px 0;
+    gap: 7px;
+  }
+  .conditions-empty strong {
+    font-size: 15px;
+  }
+  .conditions-empty p {
+    display: none;
+  }
+  .empty-sprout {
+    width: 25px;
+    height: 25px;
+  }
+  .day-controls {
+    padding: 16px 10px 12px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 13px;
+    align-self: stretch;
+  }
+  .day-counter > span {
+    font-size: 8px;
+  }
+  .day-counter strong {
+    font-size: 23px;
+  }
+  .day-controls > .primary-button {
+    font-size: 13px;
+    padding: 9px 7px;
+    gap: 7px;
+  }
+  .day-controls > .primary-button .icon {
+    width: 14px;
+    height: 14px;
+  }
+  .reset-actions {
+    gap: 9px;
+    order: 3;
+  }
+}
+/* Reserve tool rows so selecting a card/tool cannot move a 3D drag target. */
+.lamp-controls[hidden] {
+  display: grid !important;
+  visibility: hidden;
+  pointer-events: none;
+}
+.slot-picker[hidden] {
+  display: flex !important;
+  visibility: hidden;
+  pointer-events: none;
+}
+.slot-picker {
+  height: 29px;
+  min-height: 29px;
+}
+#selection-help {
+  display: none;
+}
+.tool-dock {
+  height: 76px;
+  min-height: 76px;
+}
+@media (max-width: 1100px) {
+  .tool-dock {
+    height: 48px;
+    min-height: 48px;
+  }
+}
+@media (max-width: 680px) {
+  .collection .section-note,
+  .collection-bottom {
+    display: none;
+  }
+}
+@media (min-width: 681px) and (max-height: 650px) {
+  .masthead {
+    padding: 8px 3px 4px;
+  }
+  .brand-sticker {
+    width: 38px;
+    height: 40px;
+  }
+  .brand h1 {
+    font-size: 25px;
+  }
+  .brand p {
+    font-size: 10px;
+  }
+  .workspace {
+    margin-top: 1px;
+    padding-top: 10px;
+  }
+  .environment {
+    padding: 15px 15px 10px;
+  }
+  .environment .panel-title h2 {
+    font-size: 22px;
+  }
+  .moisture-section {
+    margin: 7px 0;
+  }
+  .moisture-heading > strong {
+    font-size: 22px;
+  }
+  .moisture-meter {
+    height: 7px;
+    margin-top: 5px;
+  }
+  .condition-card {
+    padding: 6px 0;
+  }
+  .condition-top {
+    padding-right: 34px;
+  }
+  .condition-top h4 {
+    font-size: 16px;
+  }
+  .comfort-value strong {
+    font-size: 20px;
+  }
+  .comfort-value > span,
+  .status-badge,
+  .health-note {
+    display: none;
+  }
+  .condition-middle {
+    position: absolute;
+    right: 0;
+    top: 9px;
+    margin: 0;
+  }
+  .condition-card > .meter {
+    margin-top: 4px;
+  }
+  .local-values {
+    margin-top: 5px;
+  }
+  .environment-column {
+    gap: 19px;
+  }
+  .day-controls {
+    padding: 12px 15px;
+    gap: 8px;
+  }
+  .day-counter > span {
+    display: none;
+  }
+  .day-controls > .primary-button {
+    padding: 7px 12px;
+  }
+  .plant-thumbnail {
+    height: 49px;
+  }
+  .collection .section-note {
+    display: none;
+  }
+  .plant-grid {
+    margin-top: 14px;
+  }
+  .collection-bottom {
+    margin-top: 12px;
+  }
+  .scene-heading h2 {
+    font-size: 27px;
+  }
+  .lamp-controls {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+  }
+  .tool-dock {
+    height: 50px;
+    min-height: 50px;
+  }
+  .tool-dock > p {
+    display: none;
+  }
+  .scene-container,
+  .collection-collapsed .scene-container {
+    min-height: 70px;
+  }
+}

@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { batchPlant } from "./meshBatching.js";
 const palettes = {
   moss: [0x60962f, 0x87b93d, 0x477b32, 0xb5d659],
   fern: [0x287854, 0x459644, 0x8cbf43, 0x205f48],
@@ -282,17 +283,28 @@ export function createPlant(species, { ghost = false } = {}) {
     succulent: 0.9,
     fittonia: 1,
   }[species];
+  root.userData.updateBatches = batchPlant(root, ghost);
   return root;
 }
 const yellow = new THREE.Color(0xb69c4f);
 export function animatePlant(root, plant, alpha) {
   const d = root.userData;
+  const beforeHealth = d.visualHealth,
+    beforeGrowth = d.visualGrowth,
+    beforeAppear = d.appear;
   d.visualHealth = THREE.MathUtils.lerp(d.visualHealth, plant.health, alpha);
   d.visualGrowth = THREE.MathUtils.lerp(d.visualGrowth, plant.growth, alpha);
   d.appear = THREE.MathUtils.lerp(d.appear, 1, alpha);
   root.scale.setScalar(
     d.speciesScale * (0.88 + d.visualGrowth * 0.002) * d.appear,
   );
+  const changed =
+    Math.abs(beforeHealth - d.visualHealth) +
+      Math.abs(beforeGrowth - d.visualGrowth) >
+    0.00001;
+  if (!changed && d.poseReady)
+    return Math.abs(beforeAppear - d.appear) > 0.00001;
+  d.poseReady = true;
   const stress = THREE.MathUtils.clamp((70 - d.visualHealth) / 65, 0, 1);
   for (const mat of d.materials)
     if (mat.userData.healthy)
@@ -306,9 +318,12 @@ export function animatePlant(root, plant, alpha) {
       l.extra ? THREE.MathUtils.clamp((d.visualGrowth - 20) / 25, 0.01, 1) : 1,
     );
   }
+  d.updateBatches();
+  return true;
 }
 export function disposePlant(root) {
   root.traverse((o) => {
+    if (o.isInstancedMesh) o.dispose();
     if (o.geometry?.type === "TubeGeometry") o.geometry.dispose();
   });
   for (const mat of root.userData.materials) mat.dispose();

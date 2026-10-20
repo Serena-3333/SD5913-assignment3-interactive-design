@@ -74,7 +74,7 @@ async function dragCard(species, to, release = true) {
 async function openCollection() {
   if (await page.locator("#collection-open").isVisible()) {
     await page.locator("#collection-open").click();
-    await settle();
+    await page.waitForTimeout(460);
   }
 }
 async function put(species, slot) {
@@ -82,6 +82,18 @@ async function put(species, slot) {
   await page.locator(`[data-species="${species}"]`).click();
   await page.locator(`[data-slot="${slot}"]`).click();
   await settle();
+  if (
+    (await read()).plants.length === 3 &&
+    (await page.locator(".collection").isVisible())
+  ) {
+    // Only a new third planting schedules the drawer; reopened collections stay open.
+    const reopening = await page.locator("#collection-open").isHidden();
+    if (reopening)
+      await page.waitForSelector("#plant-collection[hidden]", {
+        state: "attached",
+        timeout: 3500,
+      });
+  }
 }
 async function closeTool() {
   if (await page.locator("#tool-close").isVisible())
@@ -209,6 +221,9 @@ try {
       assert.ok(wide.width > narrow.width + 200);
       const saved = await read();
       await page.locator("#collection-close").click();
+      await page.waitForSelector("#plant-collection[hidden]", {
+        state: "attached",
+      });
       assert.ok(await page.locator(".collection").isHidden());
       await openCollection();
       assert.deepEqual(await read(), saved);
@@ -541,6 +556,9 @@ try {
     async () => {
       const before = await read();
       await page.locator("#collection-close").click();
+      await page.waitForSelector("#plant-collection[hidden]", {
+        state: "attached",
+      });
       await page.locator("#reset-button").click();
       await page.keyboard.press("Escape");
       assert.deepEqual(await read(), before);

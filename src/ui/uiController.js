@@ -7,7 +7,7 @@ export function createUI(root) {
   root.innerHTML = `
  <header class="masthead"><a class="brand" href="./" aria-label="Pocket Terrarium home"><span class="brand-sticker">${icon("jar")}</span><div><h1>Pocket Terrarium<span class="title-spark">✳</span></h1><p>A tiny world shaped by your choices.</p></div></a><details class="help-menu"><summary>${icon("hand")}A little help</summary><div><strong>Make yourself a little garden.</strong><p>Drag a plant into the jar. Drag the can to water a patch. Move the lamp and aim its light. Add two plants, then try Next Day.</p><p>Click a tool, then a spot for an alternative to dragging. Esc cancels.</p></div></details></header>
  <main class="workspace">
- <aside id="plant-collection" class="collection paper-panel"><div class="panel-title"><span class="title-leaf">${icon("leaf")}</span><h2>Pick a plant</h2><button id="collection-close" class="icon-button" type="button" aria-label="Collapse plant collection" title="Collapse plant collection">${icon("close")}</button></div><p class="section-note">A little of this. A little of that.</p><div class="plant-grid">${Object.entries(
+ <div class="collection-shell"><aside id="plant-collection" class="collection paper-panel"><div class="panel-title"><span class="title-leaf">${icon("leaf")}</span><h2>Pick a plant</h2><button id="collection-close" class="icon-button" type="button" aria-label="Collapse plant collection" title="Collapse plant collection">${icon("close")}</button></div><p class="section-note">A little of this. A little of that.</p><div class="plant-grid">${Object.entries(
    SPECIES,
  )
    .map(
@@ -16,8 +16,8 @@ export function createUI(root) {
    )
    .join(
      "",
-   )}</div><div class="collection-bottom"><span class="doodle-flower">${flower}</span><span>One of each.<br>Room for three.</span><span class="little-sprout">${icon("leaf")}</span></div></aside>
- <section class="terrarium-column" aria-labelledby="terrarium-title"><div class="scene-heading"><div><span class="small-kicker">YOUR LITTLE WORLD</span><h2 id="terrarium-title">Room to grow<span>!</span></h2></div><button id="collection-open" class="collection-open" type="button" aria-controls="plant-collection" aria-expanded="true" hidden>${icon("leaf")}Plants & preferences</button><span id="plant-count" class="count-sticker">0 / 3</span></div>
+   )}</div><div class="collection-bottom"><span class="doodle-flower">${flower}</span><span>One of each.<br>Room for three.</span><span class="little-sprout">${icon("leaf")}</span></div></aside><button id="collection-open" class="collection-open" type="button" aria-label="Open plants and preferences" aria-controls="plant-collection" aria-expanded="true" hidden>${icon("leaf")}Plants</button></div>
+ <section class="terrarium-column" aria-labelledby="terrarium-title"><div class="scene-heading"><div><span class="small-kicker">YOUR LITTLE WORLD</span><h2 id="terrarium-title">Room to grow<span>!</span></h2></div><span id="plant-count" class="count-sticker">0 / 3</span></div>
  <div id="scene-container" class="scene-container"><span class="scene-spark spark-one" aria-hidden="true">✧</span><span class="scene-spark spark-two" aria-hidden="true">✳</span><div id="placement-preview" class="placement-preview" role="status" hidden></div><div id="scene-empty" class="scene-empty"><p>Little plants.<br>Big possibilities.</p></div><button id="camera-reset" class="camera-reset icon-button" type="button" title="Reset view" aria-label="Reset view">${icon("rotate")}</button><span class="orbit-hint">${icon("rotate")}Drag the view</span><div id="scene-loading" class="scene-loading">Making a little room for nature…</div></div>
  <div class="tool-dock"><div class="tool-buttons"><button id="water-button" type="button" class="tool-button water-tool" aria-pressed="false">${icon("can")}Water</button><button id="lamp-button" type="button" class="tool-button lamp-tool" aria-pressed="false">${icon("lamp")}Light</button></div><p id="tool-hint">Drag the can or lamp to experiment.</p><button id="tool-close" class="icon-button" type="button" title="Put tool away" aria-label="Put tool away" hidden>${icon("close")}</button></div>
  <div id="lamp-controls" class="lamp-controls" hidden>${[
@@ -32,15 +32,23 @@ export function createUI(root) {
    )
    .join("")}</div>
  <div class="slot-picker" aria-label="Planting and tool spots" hidden>${SLOTS.map((s, i) => `<button type="button" data-slot="${i}" class="slot-button" aria-label="${s.name}"><span>${i + 1}</span>${["Front left", "Front right", "Back"][i]}</button>`).join("")}</div><p id="selection-help" class="selection-help" role="status" hidden></p>
- <div class="day-controls"><div class="day-counter"><span>Little by little</span><strong id="day-number">Day 01</strong></div><button id="next-day" type="button" class="primary-button" disabled><span>Next Day</span>${icon("arrow")}</button><div class="reset-actions"><button id="reset-button" type="button" class="icon-button" aria-label="Reset experiment" title="Reset experiment">${icon("reset")}</button><button id="clear-button" type="button" class="icon-button" aria-label="Clear jar" title="Clear jar">${icon("trash")}</button></div></div></section>
- <aside class="environment-column"><section class="environment paper-panel" aria-labelledby="environment-title"><div class="panel-title"><span class="title-sun">${icon("sun")}</span><h2 id="environment-title">Feeling good?</h2></div><div class="moisture-section"><div class="moisture-heading"><span>${icon("drop")}Soil average</span><strong><span id="moisture-number">60</span><small>%</small></strong></div><div class="meter moisture-meter" role="meter" aria-label="Average soil moisture" aria-valuemin="0" aria-valuemax="100" aria-valuenow="60"><div id="moisture-fill" style="width:60%"></div></div></div><div id="plant-conditions"></div><span class="health-note">${icon("heart")}Health changes with the days.</span></section></aside>
+</section>
+ <aside class="environment-column"><section class="environment paper-panel" aria-labelledby="environment-title"><div class="panel-title"><span class="title-sun">${icon("sun")}</span><h2 id="environment-title">Feeling good?</h2></div><div class="moisture-section"><div class="moisture-heading"><span>${icon("drop")}Soil average</span><strong><span id="moisture-number">60</span><small>%</small></strong></div><div class="meter moisture-meter" role="meter" aria-label="Average soil moisture" aria-valuemin="0" aria-valuemax="100" aria-valuenow="60"><div id="moisture-fill" style="width:60%"></div></div></div><div id="plant-conditions"></div><span class="health-note">${icon("heart")}Health changes with the days.</span></section> <div class="day-controls"><div class="day-counter"><span>Little by little</span><strong id="day-number">Day 01</strong></div><button id="next-day" type="button" class="primary-button" disabled><span>Next Day</span>${icon("arrow")}</button><div class="reset-actions"><button id="reset-button" type="button" class="icon-button" aria-label="Reset experiment" title="Reset experiment">${icon("reset")}</button><button id="clear-button" type="button" class="icon-button" aria-label="Clear jar" title="Clear jar">${icon("trash")}</button></div></div></aside>
  </main><div id="toast" class="toast" role="status" aria-live="polite" hidden></div><div id="drag-cursor" class="drag-cursor" hidden><img alt=""/><span></span></div><dialog id="confirm-dialog"><form method="dialog"><span class="dialog-flower">${flower}</span><h2 id="confirm-title"></h2><p id="confirm-description"></p><div class="dialog-actions"><button type="submit" class="secondary-button" value="cancel">Keep growing</button><button id="confirm-action" type="submit" class="primary-button" value="confirm">Reset</button></div></form></dialog>`;
   const $ = (selector) => root.querySelector(selector);
   let selected = null,
     tool = null,
     toastTimer,
     pendingConfirmation,
-    numberFrame = 0;
+    numberFrame = 0,
+    collectionTimer,
+    collectionDelay,
+    collectionFrame,
+    collectionOpen = true;
+  for (const event of ["pointerenter", "keydown"])
+    $(".collection").addEventListener(event, () =>
+      clearTimeout(collectionDelay),
+    );
   const observed = new WeakMap(),
     animations = new Map();
   function animateNumber(element, value) {
@@ -204,14 +212,49 @@ export function createUI(root) {
       $("#toast").hidden = false;
       toastTimer = setTimeout(() => ($("#toast").hidden = true), 2300);
     },
-    setCollectionOpen(open) {
-      const collection = $(".collection");
-      collection.hidden = !open;
-      $(".workspace").classList.toggle("collection-collapsed", !open);
-      $("#collection-open").hidden = open;
-      $("#collection-open").setAttribute("aria-expanded", String(open));
-      if (!open) $("#collection-open").focus({ preventScroll: true });
-      if (open) $("#collection-close").focus({ preventScroll: true });
+    scheduleCollectionClose() {
+      clearTimeout(collectionDelay);
+      collectionDelay = setTimeout(
+        () => this.setCollectionOpen(false, false),
+        1400,
+      );
+    },
+    setCollectionOpen(open, focus = true) {
+      clearTimeout(collectionDelay);
+      clearTimeout(collectionTimer);
+      cancelAnimationFrame(collectionFrame);
+      const collection = $(".collection"),
+        workspace = $(".workspace"),
+        tab = $("#collection-open");
+      const duration = matchMedia("(prefers-reduced-motion: reduce)").matches
+        ? 0
+        : 420;
+      const wasOpen = collectionOpen;
+      collectionOpen = open;
+      tab.hidden = open;
+      tab.setAttribute("aria-expanded", String(open));
+      collection.inert = !open;
+      workspace.classList.remove("collection-closing", "collection-opening");
+      if (open) {
+        collection.hidden = false;
+        workspace.classList.remove("collection-collapsed");
+        if (!wasOpen && duration) {
+          workspace.classList.add("collection-opening");
+          void collection.offsetWidth;
+          collectionFrame = requestAnimationFrame(() =>
+            workspace.classList.remove("collection-opening"),
+          );
+        }
+        if (focus) $("#collection-close").focus({ preventScroll: true });
+      } else {
+        if (focus) tab.focus({ preventScroll: true });
+        workspace.classList.add("collection-closing");
+        collectionTimer = setTimeout(() => {
+          collection.hidden = true;
+          workspace.classList.add("collection-collapsed");
+          workspace.classList.remove("collection-closing");
+        }, duration);
+      }
     },
     preview(species, slot, percent, position) {
       const e = $("#placement-preview");
@@ -249,6 +292,9 @@ export function createUI(root) {
     },
     dispose() {
       clearTimeout(toastTimer);
+      clearTimeout(collectionTimer);
+      clearTimeout(collectionDelay);
+      cancelAnimationFrame(collectionFrame);
       cancelAnimationFrame(numberFrame);
     },
   };

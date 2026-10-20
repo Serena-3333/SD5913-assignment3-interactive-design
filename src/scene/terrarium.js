@@ -6,6 +6,7 @@ import {
   surfaceHeight,
 } from "../simulation/environment.js";
 import { moistureAt } from "../simulation/simulation.js";
+import { mergeDecorations } from "./meshBatching.js";
 import { stemBetween } from "./plantFactory.js";
 export { SOIL_Y } from "../simulation/environment.js";
 export function createTerrarium(scene) {
@@ -45,6 +46,7 @@ export function createTerrarium(scene) {
     mat(0x875439),
     [0, 0.48, 0],
   );
+  const decorations = [];
   const gravel = [mat(0xe6c78e), mat(0xc3b384), mat(0xebd8ae)];
   for (let i = 0; i < 27; i++) {
     const a = i * 2.39996,
@@ -56,6 +58,7 @@ export function createTerrarium(scene) {
       ]);
     item.scale.set(0.1 + (i % 2) * 0.025, 0.075, 0.08);
     item.rotation.y = a;
+    decorations.push(item);
   }
   const points = [[0, surfaceHeight(0, 0), 0]];
   const radial = 7,
@@ -184,7 +187,9 @@ export function createTerrarium(scene) {
     ]);
     pebble.scale.set(0.025 + (i % 4) * 0.009, 0.015, 0.028);
     pebble.rotation.y = a;
+    decorations.push(pebble);
   }
+  mergeDecorations(group, decorations);
   const profile = [
     [1.01, 0.09],
     [1.2, 0.24],

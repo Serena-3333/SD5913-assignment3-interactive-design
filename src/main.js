@@ -1,4 +1,5 @@
 import "./styles/main.css";
+import "./styles/desk.css";
 import { createUI } from "./ui/uiController.js";
 import { createScene } from "./scene/createScene.js";
 import { createInteractions } from "./interactions/plantDrag.js";
@@ -43,7 +44,7 @@ function onPlace(species, slot) {
     return;
   }
   update(next);
-  if (next.plants.length === 3) ui.setCollectionOpen(false);
+  if (next.plants.length === 3) ui.scheduleCollectionClose();
 }
 function onLamp(patch) {
   if (!busy) update(setLamp(state, patch));

@@ -272,9 +272,7 @@ export function createInteractions(
           canvas.style.cursor =
             tool === "water" || tool === "lamp"
               ? "crosshair"
-              : pick(event)
-                ? "grab"
-                : "grab";
+              : "grab";
         return;
       }
       if (event.pointerId !== drag.id) return;
