@@ -7,11 +7,12 @@ import {
   createInitialState,
   plantAt,
   movePlant,
+  removePlant,
+  placementError,
   waterSoil,
   setLamp,
   nextDay,
   resetExperiment,
-  moistureAt,
 } from "./simulation/simulation.js";
 const ui = createUI(document.querySelector("#app"));
 let state = createInitialState(),
@@ -27,24 +28,18 @@ function update(next) {
   world.sync();
   ui.render(state, busy);
 }
-function onPlace(species, slot) {
+function onPlace(species, point, movingId = null) {
   if (busy) return;
-  const existing = state.plants.find((p) => p.species === species);
-  if (existing) {
-    update(movePlant(state, species, slot));
-    return;
-  }
-  const next = plantAt(state, species, slot);
+  const next = movingId
+    ? movePlant(state, movingId, point)
+    : plantAt(state, species, point);
   if (next === state) {
-    ui.toast(
-      state.plants.length >= 3
-        ? "Room for three. Clear the jar to try a new mix."
-        : "That spot is already taken.",
-    );
+    const error = placementError(state, point, movingId);
+    if (error) ui.toast(error);
     return;
   }
   update(next);
-  if (next.plants.length === 3) ui.scheduleCollectionClose();
+  if (!movingId && next.plants.length === 5) ui.scheduleCollectionClose();
 }
 function onLamp(patch) {
   if (!busy) update(setLamp(state, patch));
@@ -54,9 +49,7 @@ function onWater(point) {
   if (busy || world.wateringCan.pouring) return;
   const next = waterSoil(state, point);
   if (next === state) return;
-  const before = moistureAt(state, point),
-    after = moistureAt(next, point);
-  if (after - before < 0.05) {
+  if (!next.moisture.some((value, i) => value > state.moisture[i] + 0.001)) {
     ui.toast("This patch is fully watered.");
     return;
   }
@@ -92,9 +85,15 @@ try {
   }
   listen("#collection-close", "click", () => ui.setCollectionOpen(false));
   listen("#collection-open", "click", () => ui.setCollectionOpen(true));
+  listen("#plant-conditions", "click", (event) => {
+    const button = event.target.closest("[data-remove]");
+    if (!button || busy) return;
+    interactions.cancel();
+    update(removePlant(state, button.dataset.remove));
+  });
   listen("#camera-reset", "click", () => world.resetCamera());
   listen("#next-day", "click", () => {
-    if (busy || state.plants.length < 2) return;
+    if (busy || state.plants.length === 0) return;
     interactions.cancel();
     busy = true;
     state = nextDay(state);

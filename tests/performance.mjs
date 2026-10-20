@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import { chromium } from "playwright";
 import { mkdir, writeFile } from "node:fs/promises";
+import { DEV_URL, put, settle } from "./browserHelpers.mjs";
+import { POINTS } from "./fixtures.mjs";
 const label = process.argv[2] || "current";
 const browser = await chromium.launch({ headless: true });
 try {
@@ -8,20 +10,19 @@ try {
     viewport: { width: 1440, height: 900 },
     deviceScaleFactor: 2,
   });
-  await page.goto(process.env.TERRARIUM_TEST_URL || "http://127.0.0.1:5174");
+  await page.goto(DEV_URL);
   await page.waitForSelector("#scene-loading[hidden]", { state: "attached" });
-  for (const [id, slot] of [
+  for (const [id, index] of [
     ["moss", 0],
     ["fittonia", 1],
     ["fern", 2],
-  ]) {
-    if (await page.locator("#collection-open").isVisible())
-      await page.locator("#collection-open").click();
-    await page.locator(`[data-species="${id}"]`).click();
-    await page.locator(`[data-slot="${slot}"]`).click();
-    await page.waitForTimeout(800);
-  }
-  await page.waitForTimeout(1800);
+  ])
+    await put(page, id, POINTS[index]);
+  await page.locator("#collection-close").click();
+  await page.waitForSelector("#plant-collection[hidden]", {
+    state: "attached",
+  });
+  await settle(page, 1800);
   const report = await page.evaluate(async () => {
     const app = await import(
       document.querySelector('script[src*="/src/main.js"]').src

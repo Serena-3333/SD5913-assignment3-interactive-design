@@ -1,73 +1,80 @@
 # Pocket Terrarium
 
-SD5913 Assignment 3 — Interactive Design · First Demo
+SD5913 Assignment 3 — Interactive Design
 
-A tiny interactive botanical world for a two-to-three-minute break. Choose plants, arrange their environment, and observe their responses. Built with Vite, vanilla JavaScript and Three.js; no backend, account, API or remote runtime assets.
+**[Open the live demo](https://serena-3333.github.io/SD5913-assignment3-interactive-design/)**
 
-![Actual running application](docs/screenshots/planted-terrarium.png)
+A tiny botanical experiment for university students taking a two-to-three-minute break. Choose plants, arrange their environment and discover how they respond. No score, tasks, accounts or purchases.
 
-## Run
+![Actual application screenshot](docs/screenshots/planted-terrarium.png)
 
-Node.js 22.12+ recommended (20.19+ also supported).
+## Run locally
+
+Use Node.js 22.12+ (20.19+ is also supported).
 
 ```sh
 npm install
 npm run dev
+```
+
+Open the address printed by Vite.
+
+## Explore
+
+- Plant **one to five individuals**, including repeats of the same species. Drag a card onto any suitable soil point; a translucent preview shows local comfort. There are no fixed planting slots. Roots need a little separation and must stay inside the soil.
+- Drag an existing plant with the **left mouse button** to move that individual. Each plant has its own ID, health, growth and local conditions. The × beside its name removes only that plant.
+- **Right-drag to rotate**, scroll to zoom, or use two fingers on a touch screen. The view-reset arrow restores the camera. Camera movement changes no ecological data.
+- Drag the watering can onto any soil patch. Its visible footprint can cover neighbouring roots; wetness stays in the soil when a plant moves. Water also has click-to-aim and arrow-key/Enter alternatives.
+- Select **Light** to adjust lamp orbit, reach, beam size and power. Drag the lamp head to position it or the light spot to aim. Reach moves the light patch along the arm. Light and comfort update immediately; health waits for the next day.
+- Click **Next Day** after planting at least one individual. An empty jar explains why the button is disabled. Each plant reports its actual health change and a short cause, such as “Health −8 · soil too dry”. The scene title also responds to the garden's state.
+- Cards describe preferences in words, encouraging observation rather than matching ideal-range numbers. The experiment's internal suitability rules remain deterministic.
+- Click a card, focus the scene and use arrow keys/Enter to plant at a free coordinate. Escape or pointer cancellation abandons an unfinished gesture without changing the garden.
+- The plant drawer waits before sliding closed at five plants. Close it earlier with × and reopen the **Plants** tab anytime. On phones, choosing a card closes the overlay so the soil stays accessible.
+- **Reset** preserves plant identities and positions while restoring day, water, lamp, health and growth. **Clear** starts with an empty jar. Both require confirmation and reopen the drawer.
+
+## Build, verification and deployment
+
+```sh
 npm test
 npm run build
 npm run preview
 ```
 
-Open the URL printed by Vite. The current local workspace preview is at **http://127.0.0.1:5174/**. For browser checks, keep the development server running:
+The production preview uses the project path printed by Vite. The Vite base is `/SD5913-assignment3-interactive-design/` for production; development serves at the root. Font URLs are rewritten by the build, and the favicon uses Vite's base placeholder.
+
+Optional browser checks (keep the development server running):
 
 ```sh
 npx playwright install chromium
-# Change the URL if your development server prints a different port.
-TERRARIUM_TEST_URL=http://127.0.0.1:5174 npm run test:browser
+npm run test:browser
 npm run test:layout
 npm run test:performance
 ```
 
-On this Mac, `Start Terrarium.command` can use the Codex bundled Node runtime when Node is absent from the terminal PATH. Open the file from Finder to execute it; a file link in chat may instead open it in an editor.
+Set `TERRARIUM_TEST_URL` if the development server uses a different address. `npm run test:production` checks the production preview; `TERRARIUM_PREVIEW_URL` can point it at another preview or the live site.
 
-## Controls
+The GitHub Actions workflow in [.github/workflows/deploy.yml](.github/workflows/deploy.yml) runs simulation tests, builds the project and deploys `dist/` to GitHub Pages on pushes to `main`. The deployment follows [Vite's project-site guidance](https://vite.dev/guide/static-deploy.html#github-pages). The demo is static and needs no backend or secret API keys.
 
-- Drag a collection card into a planting ring. The translucent model previews local comfort before release. A planted card selects/moves that existing plant rather than creating a duplicate.
-- After a third planting, the collection waits 1.4 seconds and slides left over 0.42 seconds. Close it earlier with ×, or reopen the **Plants** paper tab anytime. Confirmed Reset and Clear reopen the collection.
-- Drag plants to move or swap them. Alternatively, select a card with click/Enter and choose a named spot. Escape/pointercancel cancels an unfinished operation.
-- **Drag the watering can onto a soil patch and release.** The blue footprint has a fixed radius of 0.82 model units. Only samples within that patch gain water. The can lifts above the glass, pours at the chosen point, and returns. Alternatively, select Water and click any soil point. With the scene focused, arrow keys move a free target and Enter pours. A midpoint can water two neighbours at once; the footprint and soil field use the same radius.
-- **Drag the lamp head** to orbit and extend it. Select **Light** to reveal Orbit, Reach, Beam and Power. Drag the light spot over the soil to aim, or choose a named spot. Zero power switches off the actual spotlight and footprint; ambient light remains.
-- Drag empty scene space to orbit the camera; scroll to zoom. The circular arrow restores the view.
-- The page fits the browser window without page scrolling. Day, Next Day, Reset and Clear sit in a separate paper note below the status panel. On narrow screens the collection becomes a compact drawer.
-- Plant at least two species, then **Next Day**. Health and growth update only here; live comfort changes immediately with water, light and placement. The transition blocks repeated clicks for 800 ms.
-- Reset keeps species/positions and restores the day, all water samples, lamp parameters, health and growth. Clear restores an empty initial experiment. Both require confirmation.
+## Project structure
 
-## Current spatial model
+- `src/simulation/`: independent JavaScript for plant identities, free positions, local water/light, comfort, daily changes and reset.
+- `src/scene/`: procedural plant/jar/tool geometry, batched leaves and gravel, lighting and animation.
+- `src/interactions/plantDrag.js`: soil raycasting, free placement/movement, tool gestures, right-button orbit separation and keyboard controls.
+- `src/ui/`, `src/styles/`: responsive paper notes, qualitative preferences and per-plant change explanations.
+- `tests/`: simulation, real-browser interactions, layout, rendering budget and production-path checks.
+- `PROCESS.md`: actual design decisions, iteration and AI-tool use; no invented student usability results.
 
-The jar is smaller than the initial MVP: soil radius 1.26, glass bulge radius 1.46, rim height 2.31. Sloped terrain, connected soil layers, stones and a small branch give the plants support and height variation. Fern is tallest, Fittonia medium, Succulent compact, and Moss a low spreading cushion. These are stylized representatives, not species-specific botanical measurements.
+## Credits
 
-Water is stored on a deterministic hexagonal field. A shower adds up to 24 points at its centre, tapering to zero at radius 0.82; each sample caps at 100. Plant water values interpolate that field at their root positions. The soil-average bar is only a summary. Wetness stays in the soil when a plant moves.
+- **three.js** — 3D rendering, OrbitControls, Raycaster and geometry utilities; MIT. [Project](https://threejs.org/).
+- **Vite** — development server and production bundling; MIT. [Project](https://vite.dev/).
+- **Playwright** — browser interaction, rendering and deployment checks; Apache-2.0. [Project](https://playwright.dev/).
+- **Fredoka** — Fredoka Project Authors; SIL Open Font License 1.1. [Bundled license](public/fonts/Fredoka-LICENSE.txt), [font source](https://github.com/hafontia/Fredoka-One).
+- **DM Sans** — DM Sans Project Authors; SIL Open Font License 1.1. [Bundled license](public/fonts/DM-Sans-LICENSE.txt), [font source](https://github.com/googlefonts/dm-fonts).
+- **Libre Caslon Display** — Libre Caslon Display Authors; SIL Open Font License 1.1. Bundled from the earlier visual direction. [Bundled license](public/fonts/Libre-Caslon-Display-LICENSE.txt), [font source](https://github.com/impallari/Libre-Caslon-Display).
+- **Visual references** — user-supplied screenshots from Xiaohongshu, including [Garden Galaxy](https://store.steampowered.com/app/1970460/Garden_Galaxy/) by Anneka Tran, a stylized island/lighthouse reference credited in the supplied screenshot to “ubrilliantidiot”, illustrated game interfaces, paper-note examples and a photographed terrarium. Original post URLs and some creators were not supplied, so that attribution remains incomplete. They informed layout, colour, material and composition only. Reference images are not included in the app as backgrounds, textures or models; scene geometry and UI are authored in code.
+- **AI assistance** — OpenAI Codex assisted implementation, procedural modeling, iteration, debugging, tests and documentation, with guidance from the user-invoked 3dviz-pro-max skill. No generated raster image replaces the interactive scene, and the running app calls no AI service. See [PROCESS.md](PROCESS.md).
 
-Lamp geometry, spotlight, footprint and numeric light calculation share the same emitter, axis and cone angle. Reach moves both the head and light patch along the arm; direct aiming sets a new absolute target. Beam and power are independent. The simulation has ambient light 20 plus a bounded cone contribution, capped at 85; the readings are illustrative comfort units rather than measured lux. Daily drying is local: evaporation depends on light at each sample and uptake depends on nearby roots. Comfort remains 55% moisture suitability plus 45% light suitability. The initial health/growth values and daily health/growth rules remain unchanged.
+## Limits
 
-## Code map
-
-- `src/simulation/environment.js`: dimensions, terrain height, soil samples, water radius and lamp frame.
-- `src/simulation/simulation.js`: immutable local water/light, comfort, day, reset and planting rules; no Three.js dependency.
-- `src/scene/plantFactory.js`: four procedural models, thick custom leaf geometry, growth/health poses and shared-model thumbnails.
-- `src/scene/terrarium.js`: faceted terrain, continuous soil sides, gravel and stylized Fresnel glass.
-- `src/scene/lamp.js`, `wateringCan.js`, `footprint.js`: articulated tools, real spotlight, target footprints and water animation.
-- `src/scene/createScene.js`: renderer/camera and animation; cached shadows, idle/background suspension and stable device-resolution rendering.
-- `src/scene/meshBatching.js`: instanced leaves/veins and merged static gravel; original plant pivots drive growth and health.
-- `src/interactions/plantDrag.js`: raycasting, plant/water/lamp gestures, cancellation and alternatives.
-- `src/ui/`, `src/styles/main.css`, `src/styles/desk.css`: paper panels, delayed sliding drawer, right-side day controls and viewport-fitted layout.
-
-## Verification and limitations
-
-**18 simulation tests and 22 Chromium browser acceptance checks passed.** Production build succeeds. Browser checks include actual plant/water/head/aim dragging, isolated watering, narrow/zero/max beam controls, preserved health, camera invariance, reset, cancellation, idle rendering and a 390 px layout. The source-only and all-lights-off frames were inspected at fixed exposure. Actual screenshots are in `docs/screenshots/`; generated reports are in the ignored `test-results/` folder.
-
-The latest refinement used the **3dviz-pro-max** object, material, lighting and inspection guidance with custom Three.js geometry/shaders; no catalog kit or external model was used. Supplied references were visual guidance only. Locally bundled fonts retain their OFL licenses.
-
-The paper-desk refinement batches repeated leaves, veins and gravel, caches shadows and avoids unused hover raycasts. The clarity revision reduces the representative Moss/Fittonia/Fern scene from 12,854 to 8,270 triangles while keeping the glass opening smooth. Rendering now stays at the device pixel ratio (capped at 2), including during slow frames; it no longer automatically lowers canvas resolution. The empty-jar slogan has been removed. Frame timings from headless Chromium are diagnostic, not a promised frame rate on every Mac. See [the performance comparison](docs/performance.md).
-
-Safari, Firefox, physical touch devices, older-Mac performance and real student usability sessions remain unverified. This simplified ecology omits moisture diffusion, leaf/root competition, physical fluids and calibrated plant-care science. There is no persistence: reload begins a fresh experiment.
+This is a stylized, deterministic learning experiment, not calibrated plant-care advice. It omits physical fluids, moisture diffusion, mutual shading, root competition, accounts and persistence; reloading begins a fresh garden. Plants have freely chosen root positions with a small minimum separation, rather than collision-resolved foliage. Mouse/touch layouts are adapted, but physical touch devices and student usability sessions remain unverified. Rendering stays at the device pixel ratio, capped at 2; batching, cached shadows and idle/background suspension reduce work without automatic blurring. See [performance notes](docs/performance.md) for earlier diagnostic measurements rather than universal frame-rate claims.

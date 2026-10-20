@@ -72,3 +72,11 @@ Record actual feedback, evidence, and resulting changes here. Do not substitute 
 - Removed the “Little plants. Big possibilities.” text and its unused styling from the empty jar.
 - The Retina benchmark measured 83 draws, a stable ratio of 2 and a 50 ms median frame interval in headless Chromium. This restores four times the pixels of the prior adaptive benchmark with an explicit sharpness/performance tradeoff, recorded in docs/performance.md.
 - Passed the 18 simulation checks, all 22 browser acceptance checks, production build and the Retina slow-frame clarity/budget regression. Inspected the actual 2880 × 1800 capture and regenerated application screenshots. No JavaScript or WebGL errors were observed in the browser workflow.
+
+## Free planting and public release · 2026-10-20
+
+- Replaced three fixed species slots with one to five independent plant instances. Repeated species are allowed; each plant retains its own identity, health and growth when moved freely over the soil. Invalid positions and overlapping roots leave the state unchanged.
+- Assigned right-button dragging to camera rotation and left-button dragging to plants and tools. Kept continuous keyboard targeting and touch alternatives.
+- Allowed Next Day with one plant, explained the empty state, replaced numeric card preferences with qualitative descriptions, and added per-plant daily health changes with environmental causes. Updated headings and compact status notes for five plants.
+- Configured the GitHub Pages repository base, portable runtime instructions, a dedicated Credits section and an automated test/build/deploy workflow. Removed the machine-specific launcher.
+- Passed 20 simulation tests, 22 Chromium interaction checks and seven viewport/layout checks. Built production assets and verified the repository-subpath preview: all bundled fonts and favicon loaded, duplicate/free planting worked, daily explanations appeared and right-button rotation worked without JavaScript/WebGL errors. These automated checks are developer validation, not student user research.

@@ -33,9 +33,5 @@ export const SPECIES = Object.freeze({
   },
 });
 
-export const SLOTS = Object.freeze([
-  { name: "Front Left", x: -0.55, z: 0.43 },
-  { name: "Front Right", x: 0.54, z: 0.32 },
-  { name: "Back Center", x: -0.04, z: -0.52 },
-]);
+export const MAX_PLANTS = 5;
 export { INITIAL_LAMP } from "./environment.js";

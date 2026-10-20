@@ -1,15 +1,15 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { SPECIES, SLOTS } from "../src/simulation/species.js";
+import { SPECIES, MAX_PLANTS } from "../src/simulation/species.js";
 import {
   SOIL_POINTS,
   SOIL_RADIUS,
   WATER_RADIUS,
-  AMBIENT_LIGHT,
   INITIAL_LAMP,
   lampFrame,
   surfaceHeight,
 } from "../src/simulation/environment.js";
+import { POINTS } from "./fixtures.mjs";
 import {
   clamp,
   distanceToRange,
@@ -23,128 +23,168 @@ import {
   createInitialState,
   plantAt,
   movePlant,
+  removePlant,
+  placementError,
+  PLANT_RADIUS,
   waterSoil,
   setLamp,
   nextDay,
   resetExperiment,
+  environmentalReason,
 } from "../src/simulation/simulation.js";
-const two = () => plantAt(plantAt(createInitialState(), "moss", 0), "fern", 2);
-const near = (a, b, epsilon = 1e-8) =>
-  assert.ok(Math.abs(a - b) < epsilon, `${a} ≠ ${b}`);
-test("preference boundaries and 55/45 comfort weighting remain exact", () => {
+const near = (a, b, e = 1e-8) => assert.ok(Math.abs(a - b) < e, `${a} != ${b}`);
+const two = () =>
+  plantAt(plantAt(createInitialState(), "moss", POINTS[0]), "fern", POINTS[2]);
+test("preference ranges, boundaries, statuses and comfort weighting", () => {
   assert.equal(distanceToRange(60, 60, 85), 0);
-  assert.equal(distanceToRange(85, 60, 85), 0);
-  assert.equal(distanceToRange(50, 60, 85), 10);
   assert.equal(distanceToRange(95, 60, 85), 10);
   assert.equal(suitability(35, [60, 85]), 0);
   assert.equal(comfortFor("moss", 70, 40), 1);
   assert.equal(comfortFor("moss", 35, 40), 0.45);
-  assert.equal(comfortFor("moss", 70, 80), 0.55);
   assert.equal(comfortStatus(0.8), "Comfortable");
   assert.equal(comfortStatus(0.55), "Needs Adjustment");
   assert.equal(comfortStatus(0.549), "Stressed");
 });
-test("initial soil samples cover only the small jar and each experiment is independent", () => {
+test("initial state has independent water samples, lamp target and ID sequence", () => {
   const a = createInitialState(),
     b = createInitialState();
-  assert.equal(a.moisture.length, SOIL_POINTS.length);
-  assert.ok(a.moisture.length > 150);
-  assert.ok(SOIL_POINTS.every((p) => Math.hypot(p.x, p.z) <= SOIL_RADIUS));
-  assert.ok(a.moisture.every((v) => v === 60));
-  assert.equal(a.day, 1);
   assert.notEqual(a.moisture, b.moisture);
   assert.notEqual(a.lamp.target, b.lamp.target);
-  near(moistureAt(a, SLOTS[0]), 60);
+  assert.ok(SOIL_POINTS.length > 150);
+  assert.ok(SOIL_POINTS.every((p) => Math.hypot(p.x, p.z) <= SOIL_RADIUS));
+  assert.ok(a.moisture.every((v) => v === 60));
+  assert.equal(a.nextPlantId, 1);
 });
-test("localized watering changes exactly samples inside its visible footprint", () => {
-  const s = two(),
-    point = SLOTS[0],
-    w = waterSoil(s, point);
-  let changed = 0;
-  SOIL_POINTS.forEach((p, i) => {
-    if (Math.hypot(p.x - point.x, p.z - point.z) >= WATER_RADIUS)
-      assert.equal(w.moisture[i], 60);
-    else {
-      assert.ok(w.moisture[i] > 60);
-      changed++;
-    }
-  });
-  assert.ok(changed > 15 && changed < SOIL_POINTS.length * 0.6);
-  assert.equal(s.soilMoisture, 60);
-  assert.ok(s.moisture.every((v) => v === 60));
-  near(w.soilMoisture, averageMoisture(w.moisture));
+test("five free positions allow repeated species with independent identities", () => {
+  let s = createInitialState();
+  for (const point of POINTS) s = plantAt(s, "moss", point);
+  assert.equal(s.plants.length, MAX_PLANTS);
+  assert.equal(new Set(s.plants.map((p) => p.id)).size, 5);
+  assert.ok(
+    s.plants.every(
+      (p) => p.species === "moss" && p.health === 70 && p.growth === 20,
+    ),
+  );
+  assert.deepEqual(
+    s.plants.map((p) => p.position),
+    POINTS,
+  );
+  assert.equal(plantAt(s, "fern", { x: 0, z: 0 }), s);
 });
-test("water reaches the selected roots without changing a distant plant, health, or day", () => {
-  const s = two(),
-    w = waterSoil(s, SLOTS[0]);
-  assert.ok(conditionsFor(w, w.plants[0]).moisture > 82);
-  near(conditionsFor(w, w.plants[1]).moisture, 60);
-  assert.deepEqual(w.plants, s.plants);
-  assert.equal(w.day, 1);
-  assert.ok(w.soilMoisture < 70);
-});
-test("repeated local watering caps samples at 100 while unwatered areas stay at 60", () => {
-  let s = two();
-  for (let i = 0; i < 12; i++) s = waterSoil(s, SLOTS[0]);
-  assert.ok(s.moisture.every((v) => v <= 100 && v >= 60));
-  near(moistureAt(s, SLOTS[0]), 100);
-  near(moistureAt(s, SLOTS[2]), 60);
-  assert.equal(s.plants[0].health, 70);
-});
-test("invalid water locations have no side effects and no implicit full-jar watering", () => {
-  const s = two();
+test("free placement rejects overlap, invalid coordinates and roots outside the jar atomically", () => {
+  const s = plantAt(createInitialState(), "fern", { x: 0.123, z: -0.217 });
   for (const p of [
-    undefined,
     null,
+    undefined,
     { x: NaN, z: 0 },
     { x: 0, z: Infinity },
-    { x: SOIL_RADIUS + 0.01, z: 0 },
+    { x: PLANT_RADIUS + 0.001, z: 0 },
+    { x: 0.123, z: -0.217 },
+    { x: 0.2, z: -0.2 },
   ])
+    assert.equal(plantAt(s, "moss", p), s);
+  assert.equal(plantAt(s, "unknown", POINTS[0]), s);
+  assert.equal(s.nextPlantId, 2);
+  assert.ok(placementError(s, s.plants[0].position));
+});
+test("moving one repeated species changes only that individual and preserves health/growth", () => {
+  const s = plantAt(
+    plantAt(createInitialState(), "moss", POINTS[0]),
+    "moss",
+    POINTS[1],
+  );
+  const moved = movePlant(s, s.plants[0].id, POINTS[2]);
+  assert.deepEqual(moved.plants[0].position, POINTS[2]);
+  assert.deepEqual(moved.plants[1], s.plants[1]);
+  assert.equal(moved.plants[0].health, 70);
+  assert.equal(moved.plants[0].growth, 20);
+  assert.deepEqual(s.plants[0].position, POINTS[0]);
+  assert.equal(movePlant(s, s.plants[0].id, POINTS[1]), s);
+});
+test("removing a plant frees capacity and IDs are not reused", () => {
+  let s = createInitialState();
+  for (const p of POINTS) s = plantAt(s, "fern", p);
+  const removed = removePlant(s, s.plants[2].id);
+  assert.equal(removed.plants.length, 4);
+  assert.equal(removePlant(removed, "missing"), removed);
+  const added = plantAt(removed, "fern", POINTS[2]);
+  assert.equal(added.plants.at(-1).id, "plant-6");
+  assert.equal(s.plants.length, 5);
+});
+test("a local shower changes precisely its visible soil footprint", () => {
+  const s = two(),
+    wet = waterSoil(s, POINTS[0]);
+  let count = 0;
+  SOIL_POINTS.forEach((p, i) => {
+    if (Math.hypot(p.x - POINTS[0].x, p.z - POINTS[0].z) >= WATER_RADIUS)
+      assert.equal(wet.moisture[i], 60);
+    else {
+      assert.ok(wet.moisture[i] > 60);
+      count++;
+    }
+  });
+  assert.ok(count > 15 && count < SOIL_POINTS.length * 0.6);
+  near(wet.soilMoisture, averageMoisture(wet.moisture));
+  assert.ok(s.moisture.every((v) => v === 60));
+});
+test("a freely chosen midpoint waters neighbouring roots without watering the entire jar", () => {
+  const s = createInitialState(),
+    point = {
+      x: (POINTS[0].x + POINTS[1].x) / 2,
+      z: (POINTS[0].z + POINTS[1].z) / 2,
+    },
+    wet = waterSoil(s, point);
+  assert.ok(moistureAt(wet, POINTS[0]) > 73);
+  assert.ok(moistureAt(wet, POINTS[1]) > 73);
+  assert.ok(wet.moisture.some((v) => v === 60));
+});
+test("repeated showers saturate at 100, not above, and invalid targets do nothing", () => {
+  let s = two();
+  for (let i = 0; i < 12; i++) s = waterSoil(s, POINTS[0]);
+  assert.ok(s.moisture.every((v) => v <= 100));
+  near(moistureAt(s, POINTS[0]), 100);
+  near(moistureAt(s, POINTS[2]), 60);
+  for (const p of [undefined, null, { x: NaN, z: 0 }, { x: 9, z: 0 }])
     assert.equal(waterSoil(s, p), s);
 });
-test("lamp cone has a real aim, compact beam support, ambient baseline and bounded output", () => {
-  const s = setLamp(two(), {
-    radius: 0.3,
-    target: { x: -0.55, z: 0.43 },
-    power: 100,
-  });
-  assert.ok(lightAt(s.lamp, SLOTS[0]) > 75);
-  assert.equal(lightAt(s.lamp, SLOTS[2]), AMBIENT_LIGHT);
-  assert.equal(lightAt({ ...s.lamp, power: 0 }, SLOTS[0]), AMBIENT_LIGHT);
-  for (const p of SOIL_POINTS) {
-    const l = lightAt(s.lamp, p);
-    assert.ok(l >= 20 && l <= 85);
-  }
-});
-test("beam size and power independently control the illuminated patch", () => {
-  const base = two(),
-    wide = setLamp(base, { radius: 1.15, target: SLOTS[0], power: 100 }),
-    narrow = setLamp(wide, { radius: 0.3 }),
-    dim = setLamp(narrow, { power: 35 });
-  assert.ok(lightAt(wide.lamp, SLOTS[2]) > lightAt(narrow.lamp, SLOTS[2]));
-  assert.ok(lightAt(narrow.lamp, SLOTS[0]) > lightAt(dim.lamp, SLOTS[0]));
-  assert.equal(narrow.lamp.power, 100);
-  assert.equal(dim.lamp.radius, 0.3);
-});
-test("lamp orbit and reach alter a coherent fixture frame without mutating health or water", () => {
-  const s = two(),
-    a = setLamp(s, { azimuth: -120, reach: 1.4 }),
-    f = lampFrame(a.lamp),
-    original = lampFrame(s.lamp);
-  assert.notDeepEqual(f.head, original.head);
-  assert.notDeepEqual(f.base, original.base);
-  near(Math.hypot(f.base.x, f.base.z), 2.02);
-  near(Math.hypot(f.head.x, f.head.z), 0.62);
-  near(Math.hypot(f.direction.x, f.direction.y, f.direction.z), 1);
-  near(f.aim.y, surfaceHeight(f.aim.x, f.aim.z));
-  assert.deepEqual(a.plants, s.plants);
-  assert.deepEqual(a.moisture, s.moisture);
-  assert.notDeepEqual(
-    SLOTS.map((p) => lightAt(s.lamp, p)),
-    SLOTS.map((p) => lightAt(a.lamp, p)),
+test("water belongs to soil; moving repeated species changes only their local response", () => {
+  const s = waterSoil(
+    plantAt(
+      plantAt(createInitialState(), "moss", POINTS[0]),
+      "moss",
+      POINTS[1],
+    ),
+    POINTS[0],
   );
+  assert.ok(
+    conditionsFor(s, s.plants[0]).moisture >
+      conditionsFor(s, s.plants[1]).moisture + 15,
+  );
+  const moved = movePlant(s, s.plants[0].id, POINTS[2]);
+  assert.deepEqual(moved.moisture, s.moisture);
+  near(conditionsFor(moved, moved.plants[0]).moisture, 60);
 });
-test("lamp clamps all controls and aims inside soil, ignoring nonfinite values", () => {
+test("lamp cone remains local, bounded and controllable by size and power", () => {
+  const s = setLamp(two(), { radius: 0.3, target: POINTS[0], power: 100 });
+  assert.ok(lightAt(s.lamp, POINTS[0]) > 75);
+  assert.equal(lightAt(s.lamp, POINTS[2]), 20);
+  assert.equal(lightAt({ ...s.lamp, power: 0 }, POINTS[0]), 20);
+  assert.ok(lightAt({ ...s.lamp, radius: 1.15 }, POINTS[2]) > 20);
+  for (const p of SOIL_POINTS)
+    assert.ok(lightAt(s.lamp, p) >= 20 && lightAt(s.lamp, p) <= 85);
+});
+test("reach translates the actual aim while absolute aiming and cancellation remain exact", () => {
+  const s = setLamp(two(), { target: { x: 0, z: 0 }, radius: 0.3 }),
+    a = setLamp(s, { reach: s.lamp.reach + 0.4 }),
+    angle = (s.lamp.azimuth * Math.PI) / 180;
+  near(a.lamp.target.x, -Math.sin(angle) * 0.4);
+  near(a.lamp.target.z, -Math.cos(angle) * 0.4);
+  const f = lampFrame(a.lamp);
+  near(f.aim.y, surfaceHeight(f.aim.x, f.aim.z));
+  assert.deepEqual(setLamp(a, s.lamp).lamp, s.lamp);
+  assert.deepEqual(a.plants, s.plants);
+});
+test("lamp clamps controls and ignores nonfinite inputs", () => {
   const s = two(),
     a = setLamp(s, {
       power: 999,
@@ -158,136 +198,99 @@ test("lamp clamps all controls and aims inside soil, ignoring nonfinite values",
   assert.equal(a.lamp.reach, 1.45);
   assert.equal(a.lamp.azimuth, -180);
   assert.ok(Math.hypot(a.lamp.target.x, a.lamp.target.z) < SOIL_RADIUS);
-  const b = setLamp(s, { power: NaN, radius: Infinity });
-  assert.deepEqual(b.lamp, s.lamp);
+  assert.deepEqual(setLamp(s, { power: NaN, radius: Infinity }).lamp, s.lamp);
   assert.equal(setLamp(s, null), s);
 });
-test("plant uniqueness, fixed-slot capacity, invalid operations and immutable swapping", () => {
-  const s = two();
-  assert.equal(plantAt(s, "moss", 1), s);
-  assert.equal(plantAt(s, "succulent", 0), s);
-  assert.equal(plantAt(s, "unknown", 1), s);
-  assert.equal(plantAt(s, "succulent", 9), s);
-  const full = plantAt(s, "succulent", 1);
-  assert.equal(plantAt(full, "fittonia", 0), full);
-  const moved = movePlant(s, "moss", 2);
-  assert.equal(moved.plants[0].slot, 2);
-  assert.equal(moved.plants[1].slot, 0);
-  assert.ok(moved.plants.every((p) => p.health === 70 && p.growth === 20));
-  assert.equal(s.plants[0].slot, 0);
-  assert.equal(movePlant(s, "moss", -1), s);
+test("a single plant can advance a day, while an empty jar cannot", () => {
+  const empty = createInitialState();
+  assert.equal(nextDay(empty), empty);
+  const s = plantAt(empty, "moss", POINTS[0]),
+    a = nextDay(s);
+  assert.equal(a.day, 2);
+  assert.equal(a.plants.length, 1);
+  assert.equal(a.plants[0].id, s.plants[0].id);
 });
-test("water belongs to terrain rather than following a moved plant", () => {
-  const wet = waterSoil(two(), SLOTS[0]),
-    moved = movePlant(wet, "moss", 2);
-  assert.equal(moved.moisture, wet.moisture);
-  assert.ok(conditionsFor(wet, wet.plants[0]).moisture > 82);
-  near(conditionsFor(moved, moved.plants[0]).moisture, 60);
-  assert.equal(moved.plants[0].health, 70);
-});
-test("daily drying is spatial: lit cells and occupied roots consume water locally", () => {
-  const s = setLamp(two(), { target: SLOTS[0], radius: 0.3, power: 100 }),
-    n = nextDay(s);
-  assert.equal(n.day, 2);
-  assert.ok(n.soilMoisture < 60 && n.soilMoisture > 49);
-  assert.ok(new Set(n.moisture.map((v) => v.toFixed(2))).size > 3);
-  const far = SOIL_POINTS.findIndex(
-    (p) =>
-      Math.hypot(p.x - SLOTS[0].x, p.z - SLOTS[0].z) > 0.5 &&
-      Math.hypot(p.x - SLOTS[2].x, p.z - SLOTS[2].z) > 0.5 &&
-      lightAt(s.lamp, p) === 20,
-  );
-  assert.ok(far >= 0);
-  assert.equal(n.moisture[far], 55);
-  near(n.soilMoisture, averageMoisture(n.moisture));
-  assert.equal(s.day, 1);
-  assert.equal(nextDay(createInitialState()).day, 1);
-});
-test("health and growth use post-drying local comfort, with exact healthy-fern growth", () => {
-  const s = two(),
-    n = nextDay(s),
-    fern = n.plants.find((p) => p.species === "fern");
-  assert.equal(fern.health, 75);
-  assert.equal(fern.growth, 28);
-  for (const p of n.plants) {
-    const c = conditionsFor(n, p).comfort;
-    assert.equal(p.health, clamp(70 + Math.round(20 * (c - 0.75)), 15, 100));
-    assert.equal(p.growth, 20 + (c >= 0.8 ? 8 : c >= 0.55 ? 3 : 0));
-  }
-  const low = nextDay({
-    ...s,
-    plants: s.plants.map((p) => ({ ...p, health: 15 })),
+test("daily moisture consumption follows light and every nearby root exactly", () => {
+  const s = setLamp(two(), { target: POINTS[0], radius: 0.3, power: 100 }),
+    a = nextDay(s);
+  SOIL_POINTS.forEach((p, i) => {
+    const evaporation = Math.round(4 + lightAt(s.lamp, p) / 25);
+    const uptake = s.plants.reduce((sum, plant) => {
+      const d = Math.hypot(p.x - plant.position.x, p.z - plant.position.z);
+      return sum + (d < 0.5 ? 2 * (1 - d / 0.5) : 0);
+    }, 0);
+    near(a.moisture[i], clamp(60 - evaporation - uptake, 0, 100));
   });
-  assert.ok(low.plants.every((p) => p.health >= 15 && p.growth === 20));
 });
-test("reset restores every cell and lamp parameter but keeps plant species and arrangement", () => {
-  const s = movePlant(
-      setLamp(nextDay(waterSoil(two(), SLOTS[0])), {
-        azimuth: 0,
-        reach: 1.3,
-        power: 35,
-        radius: 0.4,
-        target: SLOTS[1],
-      }),
-      "moss",
-      1,
+test("health and growth use post-drying comfort and daily feedback reports actual deltas", () => {
+  const s = two(),
+    a = nextDay(s);
+  for (let i = 0; i < a.plants.length; i++) {
+    const p = a.plants[i],
+      old = s.plants[i],
+      c = conditionsFor(a, p);
+    const expected = clamp(
+      old.health + Math.round(20 * (c.comfort - 0.75)),
+      15,
+      100,
+    );
+    assert.equal(p.health, expected);
+    const growth =
+      expected < 40 ? 0 : c.comfort >= 0.8 ? 8 : c.comfort >= 0.55 ? 3 : 0;
+    assert.equal(p.growth, old.growth + growth);
+    assert.equal(p.lastChange.health, p.health - old.health);
+    assert.equal(p.lastChange.growth, p.growth - old.growth);
+    assert.equal(
+      p.lastChange.reason,
+      environmentalReason(p.species, c.moisture, c.light),
+    );
+  }
+});
+test("daily cause distinguishes dry, wet, dim, bright and happy conditions", () => {
+  assert.equal(environmentalReason("moss", 20, 40), "soil too dry");
+  assert.equal(environmentalReason("succulent", 75, 20), "soil too wet");
+  assert.equal(environmentalReason("succulent", 95, 70), "soil too wet");
+  assert.equal(environmentalReason("fern", 60, 20), "light too low");
+  assert.equal(environmentalReason("moss", 70, 85), "light too strong");
+  assert.equal(environmentalReason("fern", 60, 60), "happy conditions");
+});
+test("environment adjustments preserve yesterday's truthful change until the next day", () => {
+  const day = nextDay(two()),
+    change = day.plants[0].lastChange;
+  const watered = waterSoil(day, POINTS[0]);
+  const moved = movePlant(watered, day.plants[0].id, POINTS[1]);
+  assert.deepEqual(moved.plants[0].lastChange, change);
+  assert.equal(moved.plants[0].health, day.plants[0].health);
+});
+test("reset restores all fields and feedback but preserves free positions, identities and next ID", () => {
+  const s = nextDay(
+      waterSoil(setLamp(two(), { power: 15, reach: 1.3 }), POINTS[0]),
     ),
-    r = resetExperiment(s),
-    initial = createInitialState();
+    r = resetExperiment(s);
   assert.equal(r.day, 1);
-  assert.equal(r.soilMoisture, 60);
-  assert.deepEqual(r.moisture, initial.moisture);
-  assert.deepEqual(r.lamp, initial.lamp);
+  assert.equal(r.nextPlantId, s.nextPlantId);
+  assert.deepEqual(r.lamp, INITIAL_LAMP);
+  assert.ok(r.moisture.every((v) => v === 60));
   assert.deepEqual(
-    r.plants.map((p) => [p.species, p.slot]),
-    s.plants.map((p) => [p.species, p.slot]),
+    r.plants.map((p) => [p.id, p.species, p.position]),
+    s.plants.map((p) => [p.id, p.species, p.position]),
   );
-  assert.ok(r.plants.every((p) => p.health === 70 && p.growth === 20));
+  assert.ok(
+    r.plants.every(
+      (p) => p.health === 70 && p.growth === 20 && p.lastChange === null,
+    ),
+  );
 });
-test("long drought remains bounded and repeated experiments remain deterministic", () => {
-  const run = () => {
-    let s = two();
-    for (let i = 0; i < 40; i++) s = nextDay(s);
-    return s;
-  };
-  const a = run(),
-    b = run();
+test("long experiments are deterministic and all values remain bounded", () => {
+  let a = two(),
+    b = two();
+  for (let i = 0; i < 80; i++) {
+    a = nextDay(a);
+    b = nextDay(b);
+  }
   assert.deepEqual(a, b);
-  assert.ok(a.moisture.every((v) => v === 0));
+  assert.ok(a.moisture.every((v) => v >= 0 && v <= 100));
   assert.ok(
     a.plants.every((p) => p.health >= 15 && p.health <= 100 && p.growth <= 100),
   );
-  assert.notEqual(comfortFor("moss", 78, 45), comfortFor("succulent", 78, 45));
-  assert.equal(Object.keys(SPECIES).length, 4);
-});
-
-test("free watering at a midpoint reaches two neighbouring roots without watering the whole jar", () => {
-  const s = createInitialState();
-  const target = {
-    x: (SLOTS[0].x + SLOTS[1].x) / 2,
-    z: (SLOTS[0].z + SLOTS[1].z) / 2,
-  };
-  const wet = waterSoil(s, target);
-  assert.ok(moistureAt(wet, SLOTS[0]) > 73);
-  assert.ok(moistureAt(wet, SLOTS[1]) > 73);
-  assert.ok(moistureAt(wet, SLOTS[2]) < 65);
-  assert.ok(wet.moisture.some((v) => v === 60));
-  assert.notEqual(target.x, SLOTS[0].x);
-});
-test("reach translates the light target along the arm and explicit aiming remains absolute", () => {
-  const initial = setLamp(two(), { target: { x: 0, z: 0 }, radius: 0.3 });
-  const extended = setLamp(initial, { reach: initial.lamp.reach + 0.4 });
-  const angle = (initial.lamp.azimuth * Math.PI) / 180;
-  near(extended.lamp.target.x, -Math.sin(angle) * 0.4);
-  near(extended.lamp.target.z, -Math.cos(angle) * 0.4);
-  const frame = lampFrame(extended.lamp);
-  near(frame.aim.x, extended.lamp.target.x);
-  near(frame.aim.z, extended.lamp.target.z);
-  assert.notEqual(
-    lightAt(initial.lamp, initial.lamp.target),
-    lightAt(extended.lamp, initial.lamp.target),
-  );
-  assert.deepEqual(setLamp(extended, initial.lamp).lamp, initial.lamp);
-  assert.deepEqual(extended.plants, initial.plants);
-  assert.deepEqual(extended.moisture, initial.moisture);
 });

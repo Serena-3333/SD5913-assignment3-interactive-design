@@ -1,5 +1,4 @@
 import * as THREE from "three";
-import { SLOTS } from "../simulation/species.js";
 import {
   SOIL_Y,
   SOIL_RADIUS,
@@ -276,22 +275,5 @@ export function createTerrarium(scene) {
     item.castShadow = false;
     item.renderOrder = 8;
   }
-  const markers = SLOTS.map((slot, i) => {
-    const ring = add(
-      new THREE.RingGeometry(0.31, 0.34, 32),
-      new THREE.MeshBasicMaterial({
-        color: 0xfff1af,
-        transparent: true,
-        opacity: 0.7,
-        side: THREE.DoubleSide,
-        depthWrite: false,
-      }),
-      [slot.x, surfaceHeight(slot.x, slot.z) + 0.025, slot.z],
-    );
-    ring.rotation.x = -Math.PI / 2;
-    ring.userData.slot = i;
-    ring.castShadow = false;
-    return ring;
-  });
-  return { group, soilSurface, markers, updateSoil, glass };
+  return { group, soilSurface, updateSoil, glass };
 }

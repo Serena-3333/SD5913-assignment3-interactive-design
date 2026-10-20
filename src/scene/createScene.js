@@ -1,6 +1,5 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
-import { SLOTS } from "../simulation/species.js";
 import { CAMERA, surfaceHeight } from "../simulation/environment.js";
 import { createTerrarium } from "./terrarium.js";
 import {
@@ -31,7 +30,7 @@ export function createScene(container, getState) {
   container.prepend(renderer.domElement);
   renderer.domElement.setAttribute(
     "aria-label",
-    "3D terrarium. Drag plants to move, the can to water, the lamp to position it, and empty space to rotate.",
+    "3D terrarium. Left-drag plants and tools; right-drag to rotate. Two fingers rotate on touch screens.",
   );
   const camera = new THREE.PerspectiveCamera(CAMERA.fov, 1, 0.1, 40);
   camera.position.set(...CAMERA.position);
@@ -40,6 +39,12 @@ export function createScene(container, getState) {
   controls.enableDamping = true;
   controls.dampingFactor = 0.08;
   controls.enablePan = false;
+  controls.mouseButtons = {
+    LEFT: null,
+    MIDDLE: THREE.MOUSE.DOLLY,
+    RIGHT: THREE.MOUSE.ROTATE,
+  };
+  controls.touches = { ONE: null, TWO: THREE.TOUCH.DOLLY_ROTATE };
   controls.minDistance = 6;
   controls.maxDistance = 11;
   controls.minPolarAngle = 0.4;
@@ -87,10 +92,21 @@ export function createScene(container, getState) {
     lamp = createLamp(scene),
     wateringCan = createWateringCan(scene),
     plants = new Map();
+  const placementRing = new THREE.Mesh(
+    new THREE.RingGeometry(0.17, 0.195, 32),
+    new THREE.MeshBasicMaterial({
+      color: 0xb6cb73,
+      transparent: true,
+      opacity: 0.85,
+      side: THREE.DoubleSide,
+      depthWrite: false,
+    }),
+  );
+  placementRing.rotation.x = -Math.PI / 2;
+  placementRing.visible = false;
+  scene.add(placementRing);
   let ghost = null,
-    hiddenSpecies = null,
-    selectedSlot = -1,
-    choosing = false,
+    hiddenPlant = null,
     tool = null,
     lastField = null,
     frame = 0,
@@ -106,18 +122,19 @@ export function createScene(container, getState) {
   controls.addEventListener("change", () => invalidate(250));
   function sync() {
     const state = getState();
-    for (const [species, model] of plants)
-      if (!state.plants.some((p) => p.species === species)) {
+    for (const [id, model] of plants)
+      if (!state.plants.some((p) => p.id === id)) {
         disposePlant(model);
-        plants.delete(species);
+        plants.delete(id);
       }
     for (const plant of state.plants)
-      if (!plants.has(plant.species)) {
+      if (!plants.has(plant.id)) {
         const model = createPlant(plant.species),
-          p = SLOTS[plant.slot];
+          p = plant.position;
+        model.userData.plantId = plant.id;
         model.position.set(p.x, surfaceHeight(p.x, p.z), p.z);
         scene.add(model);
-        plants.set(plant.species, model);
+        plants.set(plant.id, model);
       }
     lamp.update(state.lamp);
     renderer.shadowMap.needsUpdate = true;
@@ -155,28 +172,16 @@ export function createScene(container, getState) {
     last = now;
     const state = getState();
     for (const plant of state.plants) {
-      const model = plants.get(plant.species);
+      const model = plants.get(plant.id);
       if (!model) continue;
-      const p = SLOTS[plant.slot];
+      const p = plant.position;
       target.set(p.x, surfaceHeight(p.x, p.z), p.z);
       const moving = model.position.distanceToSquared(target) > 0.00000001;
       if (moving) model.position.lerp(target, alpha);
-      model.visible = plant.species !== hiddenSpecies;
+      model.visible = plant.id !== hiddenPlant;
       if (animatePlant(model, plant, alpha) || moving)
         renderer.shadowMap.needsUpdate = true;
     }
-    terrarium.markers.forEach((marker, i) => {
-      const occupied = state.plants.some((p) => p.slot === i);
-      marker.material.color.set(i === selectedSlot ? 0xd7f589 : 0xffe5a0);
-      marker.material.opacity =
-        i === selectedSlot
-          ? 0.95
-          : occupied && !choosing
-            ? 0.04
-            : choosing
-              ? 0.7
-              : 0.3;
-    });
     if (wateringCan.moving || wateringCan.pouring)
       renderer.shadowMap.needsUpdate = true;
     wateringCan.animate(now / 1000, alpha);
@@ -216,27 +221,36 @@ export function createScene(container, getState) {
       wateringCan.preview(point);
       invalidate();
     },
-    highlight(slot, isChoosing = false) {
-      selectedSlot = slot;
-      choosing = isChoosing;
+    highlight(point, valid = true) {
+      placementRing.visible = !!point;
+      if (point) {
+        placementRing.position.set(
+          point.x,
+          surfaceHeight(point.x, point.z) + 0.04,
+          point.z,
+        );
+        placementRing.material.color.set(valid ? 0xb6cb73 : 0xd89a78);
+      }
       invalidate();
     },
-    preview(species, slot, health = 70, growth = 20) {
+    preview(species, point, health = 70, growth = 20) {
       if (ghost?.userData.species !== species) {
         if (ghost) disposePlant(ghost);
         ghost = createPlant(species, { ghost: true });
         animatePlant(ghost, { health, growth }, 1);
         scene.add(ghost);
       }
-      ghost.visible = slot >= 0;
-      if (slot >= 0) {
-        const p = SLOTS[slot];
-        ghost.position.set(p.x, surfaceHeight(p.x, p.z) + 0.015, p.z);
-      }
+      ghost.visible = !!point;
+      if (point)
+        ghost.position.set(
+          point.x,
+          surfaceHeight(point.x, point.z) + 0.015,
+          point.z,
+        );
       invalidate();
     },
-    hideSpecies(species) {
-      hiddenSpecies = species;
+    hidePlant(id) {
+      hiddenPlant = id;
       invalidate();
     },
     clearPreview() {
@@ -244,8 +258,8 @@ export function createScene(container, getState) {
         disposePlant(ghost);
         ghost = null;
       }
-      hiddenSpecies = null;
-      selectedSlot = -1;
+      hiddenPlant = null;
+      placementRing.visible = false;
       wateringCan.cancel();
       invalidate();
     },

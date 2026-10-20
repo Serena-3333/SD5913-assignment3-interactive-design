@@ -1,10 +1,11 @@
 # Current refinement validation · 2026-10-20
 
-- **16 simulation tests passed:** comfort/ranges, deterministic spatial soil, bounded water footprint/caps, independent plant water, invalid positions, lamp cone/aim/size/power/orbit/reach/clamps, uniqueness/swaps, terrain-owned moisture, local daily drying, health/growth, reset and drought bounds.
-- **22 Chromium acceptance checks passed:** real plant dragging, preview/release, invalid drops and cancellation, keyboard planting, capacity, water-can dragging, water cancellation, targeted keyboard watering, swaps preserving water/health, existing-card selection, 3D aim dragging, narrow/zero/max power, orbit/reach controls, lamp-head dragging, lamp cancellation, daily repeat guard, camera invariance, reset, source isolation, parked rendering, Clear/fourth species, mobile alternatives and no JS/WebGL errors.
-- Inspected the real overview, water-target preview, orbit, mobile, lamp-only and all-sources-off captures. A final leaf face-winding correction and base/soil contact refinements received focused visual checks. Source-isolation controls are developer inspection only; the normal scene keeps its studio fill.
-- The production build succeeds. Documentation images come from the running WebGL scene.
+- **20 simulation tests passed:** lighting and comfort, spatial watering and caps, free positions, repeated species and five-plant capacity, independent identities and movement, invalid-operation rollback, removal, terrain-owned moisture, daily drying, health/growth and causal feedback, reset and deterministic drought bounds.
+- **22 Chromium interaction checks passed:** free drag/click planting, duplicate species, independent movement, invalid drops/cancellation, keyboard targeting, left interaction/right camera rotation, local watering, lamp reach and aim, capacity and animated drawer, daily feedback, removal, reset/clear, mobile alternatives and no JavaScript/WebGL errors.
+- **Seven viewport/layout checks passed** with five plants and daily annotations, from 1440 × 900 down to 1024 × 500 and 390 × 844. The page remains within the viewport; short status notes can scroll internally.
+- **Production build and repository-subpath preview passed:** bundled fonts, favicon, procedural thumbnails and WebGL scene load; repeated free planting, daily explanations and right-button rotation work. `tests/production.mjs` also supports the deployed URL through `TERRARIUM_PREVIEW_URL`.
+- Inspected actual application screenshots, including the five-plant scene. Earlier rendering measurements and validation remain recorded chronologically in `PROCESS.md` and `docs/performance.md`; the performance benchmark was not rerun for this iteration.
 
-Browser automation is in `tests/browser.mjs`, pure-state tests in `tests/simulation.test.js`. Detailed machine-generated output goes to the ignored `test-results/browser-report.json`.
+Automation lives in `tests/simulation.test.js`, `tests/browser.mjs`, `tests/layout.mjs` and `tests/production.mjs`. Reports and temporary captures are written to the ignored `test-results/` directory.
 
-Not verified: Safari/Firefox, actual touch hardware, older-Mac performance, physical plant-care accuracy, or student usability outcomes. Earlier MVP validation remains recorded chronologically in `PROCESS.md`.
+Not verified: Safari/Firefox, actual touch hardware, older-Mac performance, physical plant-care accuracy, or student usability outcomes.

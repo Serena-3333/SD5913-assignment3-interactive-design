@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import { chromium } from "playwright";
 import { mkdir, writeFile } from "node:fs/promises";
+import { DEV_URL, put, openCollection } from "./browserHelpers.mjs";
+import { POINTS } from "./fixtures.mjs";
 const browser = await chromium.launch({ headless: true });
 const errors = [];
 const results = [];
@@ -9,26 +11,19 @@ try {
     viewport: { width: 1440, height: 900 },
   });
   page.on("pageerror", (e) => errors.push(e.message));
-  await page.goto("http://127.0.0.1:5174");
+  await page.goto(DEV_URL);
   await page.waitForSelector("#scene-loading[hidden]", { state: "attached" });
-  for (const [id, slot] of [
-    ["moss", 0],
-    ["succulent", 1],
-    ["fern", 2],
-  ]) {
-    await page.locator(`[data-species="${id}"]`).click();
-    await page.locator(`[data-slot="${slot}"]`).click();
-    await page.waitForTimeout(300);
-  }
-  assert.ok(
-    await page.locator(".collection").isVisible(),
-    "third planting keeps the note visible first",
-  );
-  await page.waitForSelector("#plant-collection[hidden]", {
-    state: "attached",
-  });
-  await page.locator("#collection-open").click();
-  await page.waitForTimeout(460);
+  for (const [index, id] of [
+    "moss",
+    "succulent",
+    "fern",
+    "moss",
+    "fern",
+  ].entries())
+    await put(page, id, POINTS[index]);
+  await openCollection(page);
+  await page.locator("#next-day").click();
+  await page.waitForTimeout(900);
   await mkdir("test-results", { recursive: true });
   for (const [width, height] of [
     [1440, 900],
