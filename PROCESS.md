@@ -30,13 +30,13 @@ Codex assists with implementation, procedural geometry, debugging, tests, and do
 - 2026-10-20: Generated actual application screenshots and verified a production build. Separated Three.js into its own cached bundle. Kept npm's lockfile for the requested npm workflow and provided a macOS launcher for the available local runtime. These are developer checks and visual QA, not student user-testing results.
 - 2026-10-20: Re-ran all 18 browser checks after the layout refinements. Re-ran the nine simulation tests through the npm script and rebuilt production assets successfully. Served the production build with `npm run preview`; Chromium returned HTTP 200, planted Moss and Fern, advanced to Day 02 with moisture 51, and reported no JavaScript/WebGL console errors. Inspected the captured orbit view and the two-/three-species screenshots.
 
-## User testing (pending)
+## User testing
 
-No user testing has been conducted. Suggested session: invite 3–5 students to plant two species, compare placement, adjust light and water, advance time, then distinguish Reset from Clear. Record completion, confusion, observations, and consent before collecting feedback.
+The project author reported user testing on 2026-10-20: interaction remained sluggish, especially camera rotation, and numeric growth/health changes were much easier to notice than plant changes. Participant counts, session methods and task-completion data were not provided. These are author-reported findings, not sessions conducted by Codex. Further testing should check whether the revised rotation and plant transitions resolve those observations.
 
-## Changes after testing (pending)
+## Changes after testing
 
-Record actual feedback, evidence, and resulting changes here. Do not substitute automated checks for user research.
+The local rotation and growth refinement below responds to the reported feedback. Follow-up user acceptance is pending; automated checks are recorded separately.
 
 ## Spatial / illustrated refinement · 2026-10-20
 
@@ -80,3 +80,17 @@ Record actual feedback, evidence, and resulting changes here. Do not substitute 
 - Allowed Next Day with one plant, explained the empty state, replaced numeric card preferences with qualitative descriptions, and added per-plant daily health changes with environmental causes. Updated headings and compact status notes for five plants.
 - Configured the GitHub Pages repository base, portable runtime instructions, a dedicated Credits section and an automated test/build/deploy workflow. Removed the machine-specific launcher.
 - Passed 20 simulation tests, 22 Chromium interaction checks and seven viewport/layout checks. Built production assets and verified the repository-subpath preview: all bundled fonts and favicon loaded, duplicate/free planting worked, daily explanations appeared and right-button rotation worked without JavaScript/WebGL errors. These automated checks are developer validation, not student user research.
+
+## User-tested rotation and growth refinement · 2026-10-20 · local only
+
+- Honored the author's new publication preference: no Git commit, push or deployment for this iteration.
+- Found synchronous OrbitControls change events could start an additional animation loop during a rendering tick. Kept the pending frame occupied until the tick schedules its single successor. Settled scenes still park; held camera gestures remain responsive.
+- Disabled MSAA at device pixel ratios of 2 or higher and increased camera damping to 0.18. Tested temporary motion resolution 1.5, then retained full device resolution (capped at 2) because full-resolution rotation performed equally well after the scheduler fix. Preserved soft shadows, spotlight shadows, glass and geometry detail. Settled plant rigs reuse local matrices.
+- In the same three-species, 1440 × 900, DPR 2 Chromium/Metal Apple M5 diagnostic, the measured median interval during a real right-button drag changed from 450 ms before to 16.7 ms after; the final full-resolution run also measured 16.7 ms, with zero shadow redraws during rotation. These automated hardware-backed browser measurements are not a promise for every physical browser/device.
+- Made mature scale just over twice seedling scale at equal health. Structural foliage unfolds across growth bands 20/40/60/80: moss clumps, fern fronds, succulent leaves and Fittonia stems/leaves. Health additionally reduces vigor and increases droop/yellowing without decreasing accumulated structural growth.
+- Added a 1.1-second smooth state transition and a reusable brief growth halo. Only actual growth triggers the cue; reduced-motion preferences snap to the result. No new simulation rules or ecological randomness were introduced.
+- Passed 27 Node checks (20 simulation plus seven model/animation checks), all 22 browser acceptance checks, and the focused real-Next-Day/four-species visual workflow. Inspected seedling, mature and wilted captures. Render diagnostics and captures remain in ignored test-results/. Follow-up user acceptance and cross-device measurements remain pending.
+
+## Approved release · 2026-10-21
+
+The author explicitly approved committing and publishing the local rotation/growth refinement. Re-ran all 27 Node tests and the production build successfully before release. The earlier local-only entry records the review stage; publication status is tracked by the GitHub Pages deployment workflow.

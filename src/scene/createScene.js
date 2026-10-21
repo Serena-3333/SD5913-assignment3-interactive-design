@@ -13,7 +13,7 @@ import { createWateringCan } from "./wateringCan.js";
 export function createScene(container, getState) {
   const scene = new THREE.Scene(),
     renderer = new THREE.WebGLRenderer({
-      antialias: true,
+      antialias: devicePixelRatio < 2,
       alpha: true,
       powerPreference: "high-performance",
     });
@@ -37,7 +37,7 @@ export function createScene(container, getState) {
   const controls = new OrbitControls(camera, renderer.domElement);
   controls.target.set(...CAMERA.target);
   controls.enableDamping = true;
-  controls.dampingFactor = 0.08;
+  controls.dampingFactor = 0.18;
   controls.enablePan = false;
   controls.mouseButtons = {
     LEFT: null,
@@ -112,14 +112,31 @@ export function createScene(container, getState) {
     frame = 0,
     until = 0,
     alive = true,
-    last = performance.now();
+    last = performance.now(),
+    orbitActive = false;
   const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
   const target = new THREE.Vector3();
   function invalidate(duration = 350) {
     until = Math.max(until, performance.now() + duration);
-    if (!frame && alive) frame = requestAnimationFrame(tick);
+    if (!frame && alive) {
+      last = performance.now();
+      frame = requestAnimationFrame(tick);
+    }
   }
-  controls.addEventListener("change", () => invalidate(250));
+  function onOrbitStart() {
+    orbitActive = true;
+    invalidate();
+  }
+  function onCameraChange() {
+    invalidate(250);
+  }
+  function onOrbitEnd() {
+    orbitActive = false;
+    invalidate(350);
+  }
+  controls.addEventListener("start", onOrbitStart);
+  controls.addEventListener("change", onCameraChange);
+  controls.addEventListener("end", onOrbitEnd);
   function sync() {
     const state = getState();
     for (const [id, model] of plants)
@@ -142,7 +159,7 @@ export function createScene(container, getState) {
       terrarium.updateSoil(state);
       lastField = state.moisture;
     }
-    invalidate(1100);
+    invalidate(1450);
   }
   function resize() {
     const { width, height } = container.getBoundingClientRect();
@@ -163,14 +180,19 @@ export function createScene(container, getState) {
   observer.observe(container);
   resize();
   function tick(now) {
-    frame = 0;
-    if (!alive || document.hidden) return;
+    // Keep the pending frame occupied throughout the tick. OrbitControls.change
+    // can invalidate synchronously during controls.update(); clearing it here
+    // would fork another loop before this tick schedules its own successor.
+    if (!alive || document.hidden) {
+      frame = 0;
+      return;
+    }
     const frameTime = now - last;
-    // Keep drawing resolution stable, including during slow frames and gestures.
     const dt = Math.min(frameTime / 1000, 0.05),
       alpha = reducedMotion ? 1 : 1 - Math.exp(-dt * 10);
     last = now;
     const state = getState();
+    let plantsAnimating = false;
     for (const plant of state.plants) {
       const model = plants.get(plant.id);
       if (!model) continue;
@@ -179,16 +201,26 @@ export function createScene(container, getState) {
       const moving = model.position.distanceToSquared(target) > 0.00000001;
       if (moving) model.position.lerp(target, alpha);
       model.visible = plant.id !== hiddenPlant;
-      if (animatePlant(model, plant, alpha) || moving)
-        renderer.shadowMap.needsUpdate = true;
+      const changing = animatePlant(model, plant, frameTime / 1000, {
+        instant: reducedMotion,
+      });
+      plantsAnimating ||= changing || moving;
+      if (changing || moving) renderer.shadowMap.needsUpdate = true;
     }
     if (wateringCan.moving || wateringCan.pouring)
       renderer.shadowMap.needsUpdate = true;
     wateringCan.animate(now / 1000, alpha);
     controls.update();
     renderer.render(scene, camera);
-    if (now < until || wateringCan.pouring || wateringCan.moving)
+    if (
+      orbitActive ||
+      plantsAnimating ||
+      now < until ||
+      wateringCan.pouring ||
+      wateringCan.moving
+    )
       frame = requestAnimationFrame(tick);
+    else frame = 0;
   }
   const onVisibility = () => {
     if (!document.hidden) invalidate();
@@ -237,7 +269,7 @@ export function createScene(container, getState) {
       if (ghost?.userData.species !== species) {
         if (ghost) disposePlant(ghost);
         ghost = createPlant(species, { ghost: true });
-        animatePlant(ghost, { health, growth }, 1);
+        animatePlant(ghost, { health, growth }, 0, { instant: true });
         scene.add(ghost);
       }
       ghost.visible = !!point;
@@ -278,6 +310,9 @@ export function createScene(container, getState) {
       alive = false;
       cancelAnimationFrame(frame);
       observer.disconnect();
+      controls.removeEventListener("start", onOrbitStart);
+      controls.removeEventListener("change", onCameraChange);
+      controls.removeEventListener("end", onOrbitEnd);
       controls.dispose();
       document.removeEventListener("visibilitychange", onVisibility);
       const geometries = new Set(),

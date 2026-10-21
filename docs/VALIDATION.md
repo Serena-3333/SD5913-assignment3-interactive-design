@@ -9,3 +9,14 @@
 Automation lives in `tests/simulation.test.js`, `tests/browser.mjs`, `tests/layout.mjs` and `tests/production.mjs`. Reports and temporary captures are written to the ignored `test-results/` directory.
 
 Not verified: Safari/Firefox, actual touch hardware, older-Mac performance, physical plant-care accuracy, or student usability outcomes.
+
+## Local user-feedback refinement · 2026-10-20
+
+- 27 Node tests passed: the existing 20 ecological-state tests and seven procedural-model tests for scale, staged foliage, transition duration, transient growth cue, health-driven vigor, resource reuse and reduced motion.
+- All 22 Chromium acceptance checks passed after the renderer and model changes, including free repeated planting/movement, water/light, camera invariance, reset/clear, idle suspension and mobile alternatives.
+- The focused tests/growth.mjs workflow passed: a real Next Day animates actual simulated growth, then settles; four-species visual extremes do not mutate simulation state. Seedling, mature and wilted captures were inspected.
+- Rotation comparisons are recorded in docs/performance.md. This iteration remains local and uncommitted, as requested. Follow-up user acceptance is pending.
+
+## Release verification · 2026-10-21
+
+The author approved release of the previously local refinement. All 27 Node tests and the production build passed again before publication. The existing interaction and growth checks above apply to this source revision.

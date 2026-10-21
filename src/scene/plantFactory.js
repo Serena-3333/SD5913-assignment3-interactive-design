@@ -82,6 +82,11 @@ export function createPlant(species, { ghost = false } = {}) {
   const root = new THREE.Group();
   root.userData.species = species;
   root.userData.leaves = [];
+  root.userData.growthParts = [];
+  function growthPart(object, threshold) {
+    root.userData.growthParts.push({ object, threshold });
+    return object;
+  }
   const materials = palettes[species].map((color) => {
     const mat = new THREE.MeshStandardMaterial({
       color,
@@ -111,7 +116,7 @@ export function createPlant(species, { ghost = false } = {}) {
     thickness,
     angle,
     material,
-    extra = false,
+    unfurlAt = 0,
     wide = false,
   ) {
     const pivot = new THREE.Group();
@@ -124,15 +129,20 @@ export function createPlant(species, { ghost = false } = {}) {
       pivot,
     );
     item.scale.set(length, thickness, width);
-    root.userData.leaves.push({ pivot, angle, extra });
+    root.userData.leaves.push({ pivot, angle, unfurlAt });
     return pivot;
   }
   if (species === "moss") {
     for (let i = 0; i < 11; i++) {
       const a = i * 2.39996,
         r = i === 0 ? 0 : 0.13 + (i % 3) * 0.15;
-      const item = mesh(sphere, materials[i % 4]);
-      item.position.set(
+      const clump = growthPart(
+        new THREE.Group(),
+        [0, 0, 0, 0, 0, 20, 20, 40, 40, 60, 80][i],
+      );
+      root.add(clump);
+      const item = mesh(sphere, materials[i % 4], clump);
+      clump.position.set(
         Math.cos(a) * r,
         0.1 + (i % 3) * 0.017,
         Math.sin(a) * r,
@@ -141,17 +151,17 @@ export function createPlant(species, { ghost = false } = {}) {
       item.rotation.y = a;
       for (let j = 0; j < 3; j++) {
         const p = new THREE.Vector3(
-          item.position.x + Math.cos(j * 2 + i) * 0.11,
-          0.24 + (i % 3) * 0.012,
-          item.position.z + Math.sin(j * 2 + i) * 0.12,
+          Math.cos(j * 2 + i) * 0.11,
+          0.14 + (i % 3) * 0.012,
+          Math.sin(j * 2 + i) * 0.12,
         );
-        const tuft = leaf(root, p, 0.1, 0.2, 0.15, 0.55, 1 + j, i > 8);
+        const tuft = leaf(clump, p, 0.1, 0.2, 0.15, 0.55, 1 + j);
         tuft.rotation.y = j * 2 + i;
       }
     }
   } else if (species === "fern") {
     for (let i = 0; i < 6; i++) {
-      const frond = new THREE.Group();
+      const frond = growthPart(new THREE.Group(), [0, 0, 20, 40, 60, 80][i]);
       frond.rotation.y = (i * Math.PI * 2) / 6 + 0.2;
       root.add(frond);
       const h = [1.1, 1.45, 1.25, 1.58, 1.28, 1.42, 1.1, 1.52][i],
@@ -168,16 +178,7 @@ export function createPlant(species, { ghost = false } = {}) {
           p = curve.getPoint(t),
           length = 0.27 * Math.sin(Math.PI * t) ** 0.7 + 0.025;
         for (const side of [-1, 1]) {
-          const pivot = leaf(
-            frond,
-            p,
-            length,
-            0.33,
-            0.23,
-            0,
-            i + j,
-            i >= 5 && j <= 2,
-          );
+          const pivot = leaf(frond, p, length, 0.33, 0.23, 0, i + j, 0);
           pivot.quaternion.setFromUnitVectors(
             axis,
             new THREE.Vector3(0.34, 0.12, side).normalize(),
@@ -203,7 +204,7 @@ export function createPlant(species, { ghost = false } = {}) {
           [1.25, 1.2, 1.0][ring],
           0.2 + ring * 0.32,
           i + ring,
-          ring === 0 && i > 6,
+          ring === 0 ? [0, 20, 0, 40, 0, 60, 20, 80, 40][i] : 0,
           "petal",
         );
       }
@@ -223,13 +224,15 @@ export function createPlant(species, { ghost = false } = {}) {
       const a = i * 2.4,
         h = [0.43, 0.66, 0.78, 0.54, 0.7][i],
         top = new THREE.Vector3(Math.cos(a) * 0.2, h, Math.sin(a) * 0.2);
-      root.add(stemBetween(new THREE.Vector3(), top, 0.016, stemMat));
+      const stalk = growthPart(new THREE.Group(), [0, 0, 20, 40, 60][i]);
+      root.add(stalk);
+      stalk.add(stemBetween(new THREE.Vector3(), top, 0.016, stemMat));
       for (let j = 0; j < 2; j++) {
         const p = top.clone().multiplyScalar(j === 0 ? 0.66 : 1),
           holder = new THREE.Group();
         holder.position.copy(p);
         holder.rotation.y = a + j * Math.PI;
-        root.add(holder);
+        stalk.add(holder);
         const blade = leaf(
           holder,
           new THREE.Vector3(),
@@ -238,7 +241,7 @@ export function createPlant(species, { ghost = false } = {}) {
           0.55,
           0.16,
           i + j,
-          i === 4 && j === 0,
+          i === 0 && j === 1 ? 80 : 0,
           true,
         );
         // Veins are children of the leaf pivot: they follow droop without detaching.
@@ -277,6 +280,23 @@ export function createPlant(species, { ghost = false } = {}) {
       }
     }
   }
+  // One reusable, non-interactive cue per plant; it only appears after real growth.
+  const halo = new THREE.Mesh(
+    new THREE.RingGeometry(0.43, 0.47, 28),
+    new THREE.MeshBasicMaterial({
+      color: 0xb6d67b,
+      transparent: true,
+      opacity: 0,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+    }),
+  );
+  halo.rotation.x = -Math.PI / 2;
+  halo.position.y = 0.035;
+  halo.visible = false;
+  halo.raycast = () => {};
+  root.add(halo);
+  root.userData.halo = halo;
   root.userData.visualHealth = 70;
   root.userData.visualGrowth = 20;
   root.userData.appear = ghost ? 1 : 0.01;
@@ -290,17 +310,49 @@ export function createPlant(species, { ghost = false } = {}) {
   return root;
 }
 const yellow = new THREE.Color(0xb69c4f);
-export function animatePlant(root, plant, alpha) {
+// Growth changes structure; health temporarily changes vigor and posture.
+// Both are visual projections of the simulation, never inputs to its rules.
+export function animatePlant(root, plant, dt, { instant = false } = {}) {
   const d = root.userData;
+  if (d.targetHealth !== plant.health || d.targetGrowth !== plant.growth) {
+    const growing =
+      d.targetGrowth !== undefined && plant.growth > d.targetGrowth;
+    d.transition = {
+      health: d.visualHealth,
+      growth: d.visualGrowth,
+      elapsed: 0,
+      growing,
+    };
+    d.targetHealth = plant.health;
+    d.targetGrowth = plant.growth;
+  }
   const beforeHealth = d.visualHealth,
     beforeGrowth = d.visualGrowth,
     beforeAppear = d.appear;
-  d.visualHealth = THREE.MathUtils.lerp(d.visualHealth, plant.health, alpha);
-  d.visualGrowth = THREE.MathUtils.lerp(d.visualGrowth, plant.growth, alpha);
-  d.appear = THREE.MathUtils.lerp(d.appear, 1, alpha);
+  const t = d.transition;
+  t.elapsed = instant ? 1.1 : Math.min(1.1, t.elapsed + dt);
+  const progress = t.elapsed / 1.1,
+    eased = progress * progress * (3 - 2 * progress);
+  d.visualHealth = THREE.MathUtils.lerp(t.health, plant.health, eased);
+  d.visualGrowth = THREE.MathUtils.lerp(t.growth, plant.growth, eased);
+  d.appear = instant
+    ? 1
+    : THREE.MathUtils.lerp(d.appear, 1, 1 - Math.exp(-dt * 10));
+  if (1 - d.appear < 0.001) d.appear = 1;
+  const growth = THREE.MathUtils.clamp((d.visualGrowth - 20) / 80, 0, 1),
+    vigor = 0.8 + 0.2 * THREE.MathUtils.clamp(d.visualHealth / 100, 0, 1),
+    pulse =
+      !instant && t.growing && progress < 1 ? Math.sin(progress * Math.PI) : 0;
   root.scale.setScalar(
-    d.speciesScale * (0.88 + d.visualGrowth * 0.002) * d.appear,
+    d.speciesScale *
+      (0.55 + 0.6 * growth) *
+      vigor *
+      d.appear *
+      (1 + pulse * 0.035),
   );
+  d.halo.visible = pulse > 0.001;
+  d.halo.material.opacity = pulse * 0.55;
+  d.halo.scale.setScalar(0.8 + progress * 0.65);
   const changed =
     Math.abs(beforeHealth - d.visualHealth) +
       Math.abs(beforeGrowth - d.visualGrowth) >
@@ -312,16 +364,26 @@ export function animatePlant(root, plant, alpha) {
   for (const mat of d.materials)
     if (mat.userData.healthy)
       mat.color.copy(mat.userData.healthy).lerp(yellow, stress * 0.72);
+  const unfold = (threshold) => {
+    const p = THREE.MathUtils.clamp((d.visualGrowth - threshold) / 16, 0, 1);
+    return Math.max(0.001, p * p * (3 - 2 * p));
+  };
+  for (const { object, threshold } of d.growthParts)
+    object.scale.setScalar(unfold(threshold));
   for (const l of d.leaves) {
     if (l.quaternion) {
       l.pivot.quaternion.copy(l.quaternion);
-      l.pivot.rotateZ(-stress * 0.28);
-    } else l.pivot.rotation.z = l.angle - stress * 0.4;
-    l.pivot.scale.setScalar(
-      l.extra ? THREE.MathUtils.clamp((d.visualGrowth - 20) / 25, 0.01, 1) : 1,
-    );
+      l.pivot.rotateZ(-stress * 0.4);
+    } else l.pivot.rotation.z = l.angle - stress * 0.55;
+    l.pivot.scale.setScalar(unfold(l.unfurlAt));
   }
   d.updateBatches();
+  // Settled rigs reuse local matrices on camera frames. Poses refresh them here.
+  root.traverse((o) => {
+    if (o === root || o === d.halo) return;
+    o.updateMatrix();
+    o.matrixAutoUpdate = false;
+  });
   return true;
 }
 export function disposePlant(root) {
@@ -329,6 +391,8 @@ export function disposePlant(root) {
     if (o.isInstancedMesh) o.dispose();
     if (o.geometry?.type === "TubeGeometry") o.geometry.dispose();
   });
+  root.userData.halo.geometry.dispose();
+  root.userData.halo.material.dispose();
   for (const mat of root.userData.materials) mat.dispose();
   root.removeFromParent();
 }
@@ -343,7 +407,7 @@ export function createThumbnails(renderer) {
   renderer.setSize(286, 220, false);
   for (const species of Object.keys(palettes)) {
     const model = createPlant(species);
-    animatePlant(model, { health: 85, growth: 35 }, 1);
+    animatePlant(model, { health: 85, growth: 65 }, 0, { instant: true });
     model.rotation.y = -0.25;
     scene.add(model);
     const box = new THREE.Box3().setFromObject(model),

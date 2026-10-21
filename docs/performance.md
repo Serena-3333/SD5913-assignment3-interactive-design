@@ -1,4 +1,22 @@
-# Rendering clarity and performance
+# Local rotation refinement · 2026-10-20
+
+A synchronous camera-change invalidation could fork an additional rendering loop from inside a tick. The local fix keeps exactly one scheduled loop. Retina MSAA is disabled; damping is 0.18 and settled plant matrices are reused. Full resolution remains capped at DPR 2 during rotation as well as at rest. Soft shadows, the shadow-casting spotlight and glass are preserved.
+
+Hardware-backed headless Chromium (Metal, Apple M5), 1440 × 900, DPR 2, three species:
+
+| Diagnostic | Before | Revised, full resolution |
+| --- | ---: | ---: |
+| Median interval during right-button rotation | 450 ms | 16.7 ms |
+| 95th percentile during rotation | 983.4 ms | 17.6 ms |
+| Median forced static-frame interval | 16.7 ms | 16.7 ms |
+| Pixel ratio during rotation | 2 | 2 |
+| Shadow refreshes during rotation | 0 | 0 |
+
+Temporary motion DPR 1.5 was also tried and measured 16.7 ms median, so it was not retained. These compare complete revisions (including the smaller seedling geometry projection); they are not isolated GPU microbenchmarks or guaranteed device frame rates. Detailed local reports: test-results/performance-before.json and performance-full-resolution.json. Set TERRARIUM_GPU=metal for the performance script on a compatible Mac; leaving it unset uses Playwright's default graphics backend.
+
+The following section records earlier software-rendered measurements and should not be compared directly with the Metal numbers above.
+
+# Earlier rendering clarity and performance
 
 The current revision keeps the canvas at the device pixel ratio, capped at 2, during gestures and slow frames. The earlier adaptive resolution policy caused visible blur and has been removed. Instead, small blades, stems, veins, soil subdivisions, gravel and secondary rims were simplified. The main glass lip and curved wall keep their smooth outlines. The empty-jar slogan was removed.
 

@@ -25,7 +25,10 @@ import {
   closeTool,
   waitCan,
 } from "./browserHelpers.mjs";
-const browser = await chromium.launch({ headless: true }),
+const browser = await chromium.launch({
+    headless: true,
+    args: process.env.TERRARIUM_GPU === "metal" ? ["--use-angle=metal"] : [],
+  }),
   page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
 const errors = [],
   results = [];
