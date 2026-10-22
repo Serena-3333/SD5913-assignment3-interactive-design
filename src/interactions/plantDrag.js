@@ -18,13 +18,15 @@ export function createInteractions(
 ) {
   const canvas = world.renderer.domElement,
     raycaster = new THREE.Raycaster();
-  const lampPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -2.95);
   const controller = new AbortController(),
     { signal } = controller;
   let selected = null,
     tool = null,
     drag = null,
-    keyboardPoint = { x: 0, z: 0 };
+    keyboardPoint = { x: 0, z: 0 },
+    hoverFrame = 0,
+    hoverEvent = null;
+  const lightHandle = ui.$("#light-handle");
   const cursor = ui.$("#drag-cursor");
   canvas.tabIndex = 0;
   canvas.setAttribute(
@@ -60,7 +62,7 @@ export function createInteractions(
     const hits = raycaster.intersectObjects(
       [
         ...world.plants.values(),
-        world.lamp.head,
+        world.lamp.group,
         world.wateringCan.group,
         world.lamp.aimHandle,
       ],
@@ -98,11 +100,97 @@ export function createInteractions(
     }
     redraw();
   }
+  function clearHover() {
+    cancelAnimationFrame(hoverFrame);
+    hoverFrame = 0;
+    world.setHover(null);
+    ui.hover(null);
+  }
+  function showHover(e) {
+    hoverFrame = 0;
+    if (drag || isBusy() || !world.controls.enabled) return;
+    if (e.buttons & 2) {
+      clearHover();
+      return;
+    }
+    if (lightHandle.contains(e.target)) {
+      world.setHover("aim");
+      const r = canvas.getBoundingClientRect();
+      ui.hover("Drag to move the light spot", {
+        x: e.clientX - r.left,
+        y: e.clientY - r.top,
+      });
+      return;
+    }
+    if (e.target !== canvas) {
+      clearHover();
+      return;
+    }
+    const r = canvas.getBoundingClientRect();
+    let kind = null;
+    if (selected) canvas.style.cursor = "crosshair";
+    else {
+      const hit = pick(e),
+        point = soilPoint(e);
+      kind =
+        hit?.kind === "water" || hit?.kind === "lamp"
+          ? hit.kind
+          : hit?.kind === "aim" ||
+              (!hit &&
+                point &&
+                getState().lamp.power > 0 &&
+                world.lamp.containsPoint(point))
+            ? "aim"
+            : null;
+      if (tool === "water" && point) kind = null;
+      canvas.style.cursor =
+        kind === "water" || kind === "aim" || hit?.kind === "plant"
+          ? "grab"
+          : kind === "lamp"
+            ? "pointer"
+            : tool
+              ? "crosshair"
+              : "default";
+    }
+    world.setHover(kind);
+    ui.hover(
+      kind === "water"
+        ? "Drag the can onto a soil patch"
+        : kind === "lamp"
+          ? "Drag the light spot to aim. Click for controls."
+          : kind === "aim"
+            ? "Drag the light spot to aim"
+            : null,
+      { x: e.clientX - r.left, y: e.clientY - r.top },
+    );
+  }
+  function queueHover(e) {
+    hoverEvent = e;
+    if (!hoverFrame)
+      hoverFrame = requestAnimationFrame(() => showHover(hoverEvent));
+  }
+  canvas.addEventListener(
+    "pointerleave",
+    () => {
+      if (!drag) clearHover();
+    },
+    { signal },
+  );
+  lightHandle.addEventListener(
+    "pointerleave",
+    () => {
+      if (!drag) clearHover();
+    },
+    { signal },
+  );
+  world.controls.addEventListener("start", clearHover);
   function clear() {
+    clearHover();
     world.clearPreview();
     ui.hidePreview();
     cursor.hidden = true;
     world.controls.enabled = true;
+    lightHandle.classList.remove("dragging");
     canvas.style.cursor = "default";
   }
   function cancel(notify = false) {
@@ -125,7 +213,9 @@ export function createInteractions(
       active: false,
       ...extra,
     };
+    clearHover();
     world.controls.enabled = false;
+    lightHandle.classList.add("dragging");
     canvas.style.cursor = "grabbing";
   }
   function plantPreview(species, point, movingId = null) {
@@ -194,73 +284,107 @@ export function createInteractions(
       { signal },
     );
   }
-  canvas.addEventListener(
-    "pointerdown",
+  function onSceneDown(e) {
+    if (e.button !== 0) return;
+    if (isBusy()) {
+      e.stopImmediatePropagation();
+      return;
+    }
+    const point = soilPoint(e),
+      hit = e.currentTarget === lightHandle ? { kind: "aim" } : pick(e);
+    const own = () => {
+      e.stopImmediatePropagation();
+      e.preventDefault();
+    };
+    // A selected tool/species owns the soil, including points over existing leaves.
+    if (selected) {
+      own();
+      const species = selected;
+      const error = placementError(getState(), point);
+      if (error) {
+        ui.toast(error);
+        return;
+      }
+      cancel();
+      onPlace(species, point);
+      return;
+    }
+    if (tool === "water" && point) {
+      own();
+      begin(e, "water", { fromCan: false });
+      showWater(point);
+      return;
+    }
+    if (
+      tool === "lamp" &&
+      point &&
+      hit?.kind !== "aim" &&
+      hit?.kind !== "lamp"
+    ) {
+      own();
+      begin(e, "aim", { originalLamp: structuredClone(getState().lamp) });
+      onLamp({ target: point });
+      return;
+    }
+    if (hit?.kind === "water") {
+      own();
+      setTool("water", false);
+      begin(e, "water", { fromCan: true });
+      return;
+    }
+    if (hit?.kind === "lamp") {
+      own();
+      setTool("lamp", false);
+      return;
+    }
+    if (
+      hit?.kind === "aim" ||
+      (!hit &&
+        point &&
+        getState().lamp.power > 0 &&
+        world.lamp.containsPoint(point))
+    ) {
+      own();
+      setTool("lamp", false);
+      begin(e, "aim", {
+        originalLamp: structuredClone(getState().lamp),
+        aimOffset: point
+          ? {
+              x: getState().lamp.target.x - point.x,
+              z: getState().lamp.target.z - point.z,
+            }
+          : { x: 0, z: 0 },
+      });
+      return;
+    }
+    if (hit?.kind === "plant") {
+      const p = getState().plants.find((p) => p.id === hit.id);
+      own();
+      begin(e, "plant", { species: p.species, movingId: p.id });
+    }
+  }
+  canvas.addEventListener("pointerdown", onSceneDown, {
+    capture: true,
+    signal,
+  });
+  lightHandle.addEventListener("pointerdown", onSceneDown, {
+    capture: true,
+    signal,
+  });
+  lightHandle.addEventListener(
+    "click",
     (e) => {
-      if (e.button !== 0) return;
-      if (isBusy()) {
-        e.stopImmediatePropagation();
-        return;
-      }
-      const point = soilPoint(e),
-        hit = pick(e);
-      const own = () => {
-        e.stopImmediatePropagation();
-        e.preventDefault();
-      };
-      // A selected tool/species owns the soil, including points over existing leaves.
-      if (selected) {
-        own();
-        const species = selected;
-        const error = placementError(getState(), point);
-        if (error) {
-          ui.toast(error);
-          return;
-        }
-        cancel();
-        onPlace(species, point);
-        return;
-      }
-      if (tool === "water" && point) {
-        own();
-        begin(e, "water", { fromCan: false });
-        showWater(point);
-        return;
-      }
-      if (tool === "lamp" && point) {
-        own();
-        begin(e, "aim", { originalLamp: structuredClone(getState().lamp) });
-        onLamp({ target: point });
-        return;
-      }
-      if (hit?.kind === "water") {
-        own();
-        setTool("water", false);
-        begin(e, "water", { fromCan: true });
-        return;
-      }
-      if (hit?.kind === "lamp") {
-        own();
-        setTool("lamp", false);
-        begin(e, "lamp", { originalLamp: structuredClone(getState().lamp) });
-        return;
-      }
-      if (hit?.kind === "plant") {
-        const p = getState().plants.find((p) => p.id === hit.id);
-        own();
-        begin(e, "plant", { species: p.species, movingId: p.id });
-      }
+      if (e.detail === 0 && !isBusy()) setTool("lamp", false);
     },
-    { capture: true, signal },
+    { signal },
   );
   window.addEventListener(
     "pointermove",
     (e) => {
       if (!drag) {
-        if (e.target === canvas) {
-          canvas.style.cursor = selected || tool ? "crosshair" : "default";
-          if (selected && !isBusy()) plantPreview(selected, soilPoint(e));
-        }
+        queueHover(e);
+        if (e.target === canvas && selected && !isBusy())
+          plantPreview(selected, soilPoint(e));
         return;
       }
       if (e.pointerId !== drag.id) return;
@@ -271,21 +395,15 @@ export function createInteractions(
         return;
       }
       if (!drag.active) return;
-      if (drag.kind === "lamp") {
-        if (ray(e)) {
-          const p = raycaster.ray.intersectPlane(
-            lampPlane,
-            new THREE.Vector3(),
-          );
-          if (p)
-            onLamp({
-              azimuth: (Math.atan2(p.x, p.z) * 180) / Math.PI,
-              reach: 2.02 - Math.hypot(p.x, p.z),
-            });
-        }
-      } else if (drag.kind === "aim") {
+      if (drag.kind === "aim") {
         const point = soilPoint(e);
-        if (point) onLamp({ target: point });
+        if (point)
+          onLamp({
+            target: {
+              x: point.x + (drag.aimOffset?.x || 0),
+              z: point.z + (drag.aimOffset?.z || 0),
+            },
+          });
       } else {
         if (drag.movingId) world.hidePlant(drag.movingId);
         const point = soilPoint(e);
@@ -310,17 +428,24 @@ export function createInteractions(
       clear();
       if (d.kind === "water") {
         select(null);
-        if (point && (d.active || !d.fromCan)) onWater(point);
-        else if (d.active) ui.toast("Choose a soil patch inside the jar.");
-      } else if (d.kind === "lamp" || d.kind === "aim") onLamp({});
-      else if (d.active) {
+        if (point && (d.active || !d.fromCan)) {
+          onWater(point);
+          setTool(null, false);
+        } else if (d.active) ui.toast("Choose a soil patch inside the jar.");
+      } else if (d.kind === "aim") {
+        if (!point && d.active) onLamp(d.originalLamp);
+        else onLamp({});
+      } else if (d.active) {
         select(null);
         const error = placementError(getState(), point, d.movingId);
         if (error) ui.toast(error);
         else onPlace(d.species, point, d.movingId);
       } else if (!d.movingId) {
         select(d.species);
-        keyboardPoint = { x: 0, z: 0 };
+        ((keyboardPoint = { x: 0, z: 0 }),
+          (hoverFrame = 0),
+          (hoverEvent = null));
+        const lightHandle = ui.$("#light-handle");
         canvas.focus({ preventScroll: true });
         if (matchMedia("(max-width:680px)").matches)
           ui.setCollectionOpen(false, false);
@@ -382,6 +507,7 @@ export function createInteractions(
     dispose() {
       cancel();
       controller.abort();
+      world.controls.removeEventListener("start", clearHover);
     },
   };
 }

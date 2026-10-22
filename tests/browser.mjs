@@ -313,7 +313,8 @@ try {
     "water cancellation preserves the soil field and returns the can",
     async () => {
       const s = await snapshot(page);
-      await page.locator("#water-button").click();
+      await page.locator("#water-button").focus();
+      await page.keyboard.press("Enter");
       const q = await point(page, { x: 0.4, z: -0.4 });
       await page.mouse.move(q.x, q.y);
       await page.mouse.down();
@@ -325,20 +326,27 @@ try {
     },
   );
   await check(
-    "reach moves the actual light pool; size/power and live readouts stay synchronized",
+    "range changes the light footprint while lamp body and aim stay fixed; intensity stays synchronized",
     async () => {
-      await page.locator("#lamp-button").click();
-      await page.locator("#lamp-reach").focus();
+      await page.locator("#lamp-button").focus();
+      await page.keyboard.press("Enter");
+      await page.locator("#lamp-radius").focus();
       await page.keyboard.press("Home");
       const from = await snapshot(page);
+      const initialEdge = await appCall(
+        page,
+        "return Array.from(app.inspectScene().lamp.footprint.mesh.geometry.attributes.position.array);",
+      );
       await page.keyboard.press("End");
       const end = await snapshot(page);
-      assert.ok(
-        Math.hypot(
-          end.lamp.target.x - from.lamp.target.x,
-          end.lamp.target.z - from.lamp.target.z,
-        ) > 0.5,
+      assert.deepEqual(end.lamp.target, from.lamp.target);
+      assert.equal(end.lamp.azimuth, from.lamp.azimuth);
+      assert.equal(end.lamp.reach, from.lamp.reach);
+      const finalEdge = await appCall(
+        page,
+        "return Array.from(app.inspectScene().lamp.footprint.mesh.geometry.attributes.position.array);",
       );
+      assert.ok(finalEdge.some((n, i) => Math.abs(n - initialEdge[i]) > 0.1));
       const v = await appCall(
         page,
         "const l=app.inspectScene().lamp,a=l.footprint.mesh.geometry.attributes.position;return {x:a.getX(0),z:a.getZ(0),target:l.light.target.position.toArray()};",
@@ -544,7 +552,8 @@ try {
       s = await snapshot(page);
       assert.equal(s.plants.length, 2);
       assert.ok(Math.abs(s.plants[1].position.x + 0.4) < 1e-6);
-      await page.locator("#water-button").click();
+      await page.locator("#water-button").focus();
+      await page.keyboard.press("Enter");
       await page.keyboard.press("ArrowDown");
       await page.keyboard.press("Enter");
       await settle(page);

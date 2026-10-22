@@ -75,9 +75,14 @@ export function createWateringCan(scene) {
     pourPoint = null,
     started = null,
     clock = 0,
-    active = false;
+    active = false,
+    hovered = false;
   const nozzle = new THREE.Vector3(),
     target = new THREE.Vector3();
+  function rest() {
+    destination.copy(home);
+    if (hovered) destination.y += 0.09;
+  }
   function positionFor(point) {
     destination.set(point.x - 0.67, 2.45, point.z + 0.025);
   }
@@ -85,6 +90,10 @@ export function createWateringCan(scene) {
     group,
     rose,
     footprint,
+    setHovered(value) {
+      hovered = value;
+      if (!active && !preview) rest();
+    },
     preview(point) {
       preview = point;
       if (point) {
@@ -92,7 +101,7 @@ export function createWateringCan(scene) {
         footprint.circle(point, WATER_RADIUS);
         footprint.material.uniforms.opacity.value = 0.9;
       } else if (!active) {
-        destination.copy(home);
+        rest();
         footprint.mesh.visible = false;
       }
     },
@@ -107,7 +116,7 @@ export function createWateringCan(scene) {
     cancel() {
       preview = null;
       if (!active) {
-        destination.copy(home);
+        rest();
         footprint.mesh.visible = false;
       }
     },
@@ -140,7 +149,7 @@ export function createWateringCan(scene) {
       const age = started === null ? 0 : time - started;
       if (active && started !== null && age > 1) {
         active = false;
-        destination.copy(home);
+        rest();
       }
       group.rotation.y = THREE.MathUtils.lerp(
         group.rotation.y,

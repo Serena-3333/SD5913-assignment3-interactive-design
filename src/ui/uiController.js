@@ -6,7 +6,7 @@ const flower =
   '<svg viewBox="0 0 60 60" fill="none" aria-hidden="true"><path d="M30 21C18 1 2 20 20 30 0 43 20 59 30 40c12 20 29 0 10-10 20-12 1-30-10-9Z" fill="currentColor"/><circle cx="30" cy="30" r="7" fill="#fff4c9"/></svg>';
 export function createUI(root) {
   root.innerHTML = `
- <header class="masthead"><a class="brand" href="./" aria-label="Pocket Terrarium home"><span class="brand-sticker">${icon("jar")}</span><div><h1>Pocket Terrarium<span class="title-spark">✳</span></h1><p>A tiny world shaped by your choices.</p></div></a><details class="help-menu"><summary>${icon("hand")}A little help</summary><div><strong>Make yourself a little garden.</strong><p>Drag a plant into the jar. Drag the can to water a patch. Move the lamp and aim its light. Plant one to five, including repeats. Then try Next Day. Right-drag to rotate; two fingers on touch screens.</p><p>Click a tool, then a spot for an alternative to dragging. Esc cancels.</p></div></details></header>
+ <header class="masthead"><a class="brand" href="./" aria-label="Pocket Terrarium home"><span class="brand-sticker">${icon("jar")}</span><div><h1>Pocket Terrarium<span class="title-spark">✳</span></h1><p>A tiny world shaped by your choices.</p></div></a><details class="help-menu"><summary>${icon("hand")}A little help</summary><div><strong>Make yourself a little garden.</strong><p>Drag a plant into the jar. Drag the can to water a patch. Drag the light spot on the soil; click the lamp for range and intensity. Range and intensity adjust the light. Plant one to five, including repeats. Then try Next Day. Hold the right mouse button and drag to rotate; two fingers on touch screens.</p><p>Click a tool, then a spot for an alternative to dragging. Esc cancels.</p></div></details></header>
  <main class="workspace">
  <div class="collection-shell"><aside id="plant-collection" class="collection paper-panel"><div class="panel-title"><span class="title-leaf">${icon("leaf")}</span><h2>Pick a plant</h2><button id="collection-close" class="icon-button" type="button" aria-label="Collapse plant collection" title="Collapse plant collection">${icon("close")}</button></div><p id="collection-instruction" class="section-note">Drag a card onto the soil. Or click a card, then the soil.</p><div class="plant-grid">${Object.entries(
    SPECIES,
@@ -17,21 +17,20 @@ export function createUI(root) {
    )
    .join(
      "",
-   )}</div><div class="collection-bottom"><span class="doodle-flower">${flower}</span><span>Up to five.<br>Mix, repeat, explore.</span><span class="little-sprout">${icon("leaf")}</span></div></aside><button id="collection-open" class="collection-open" type="button" aria-label="Open plants and preferences" aria-controls="plant-collection" aria-expanded="true" hidden>${icon("leaf")}Plants</button></div>
- <section class="terrarium-column" aria-labelledby="terrarium-title"><div class="scene-heading"><div><span class="small-kicker">YOUR LITTLE WORLD</span><h2 id="terrarium-title">Room to grow<span>!</span></h2></div><span id="plant-count" class="count-sticker">0 / 5</span></div>
- <div id="scene-container" class="scene-container"><div id="planting-guide" class="planting-guide" role="status"><span class="guide-arrow" aria-hidden="true">↘</span><span id="planting-instruction">Drag a plant from the left onto the soil.<small>Or click a card, then click a soil spot.</small></span></div><span class="scene-spark spark-one" aria-hidden="true">✧</span><span class="scene-spark spark-two" aria-hidden="true">✳</span><div id="placement-preview" class="placement-preview" role="status" hidden></div><button id="camera-reset" class="camera-reset icon-button" type="button" title="Reset view" aria-label="Reset view">${icon("rotate")}</button><span class="orbit-hint">${icon("rotate")}Right-drag to rotate</span><div id="scene-loading" class="scene-loading">Making a little room for nature…</div></div>
- <div class="tool-dock"><div class="tool-buttons"><button id="water-button" type="button" class="tool-button water-tool" aria-pressed="false">${icon("can")}Water</button><button id="lamp-button" type="button" class="tool-button lamp-tool" aria-pressed="false">${icon("lamp")}Light</button></div><p id="tool-hint">Drag the can or lamp to experiment.</p><button id="tool-close" class="icon-button" type="button" title="Put tool away" aria-label="Put tool away" hidden>${icon("close")}</button></div>
- <div id="lamp-controls" class="lamp-controls" hidden>${[
-   ["azimuth", "Orbit", -180, 180, 1],
-   ["reach", "Reach", 0, 1.45, 0.01],
-   ["radius", "Beam", 0.3, 1.15, 0.01],
-   ["power", "Power", 0, 100, 1],
+   )}</div><div class="collection-bottom"><span class="doodle-flower">${flower}</span><span>One plant is enough.<br>Up to five, repeats welcome.</span><span class="little-sprout">${icon("leaf")}</span></div></aside><button id="collection-open" class="collection-open" type="button" aria-label="Open plants and preferences" aria-controls="plant-collection" aria-expanded="true" hidden>${icon("leaf")}Plants</button></div>
+ <section class="terrarium-column" aria-labelledby="terrarium-title"><div class="scene-heading"><div><span class="small-kicker">YOUR LITTLE WORLD</span><h2 id="terrarium-title">Room to grow<span>!</span></h2><p id="plant-count" class="capacity-note" aria-label="Plant capacity">0 planted · max 5</p></div></div><div class="view-controls"><span class="view-instruction">${icon("rotate")}<span class="desktop-orbit">Hold right mouse + drag to rotate</span><span class="touch-orbit">Two fingers to rotate</span></span><button id="camera-reset" type="button" class="view-reset" aria-label="Reset view">${icon("reset")}Reset view</button></div>
+ <div id="scene-container" class="scene-container"><span class="scene-spark spark-one" aria-hidden="true">✧</span><span class="scene-spark spark-two" aria-hidden="true">✳</span><div id="placement-preview" class="placement-preview" role="status" hidden></div><button id="light-handle" class="light-handle" type="button" aria-label="Drag light spot; click then use arrow keys to aim"></button><div id="tool-hover" class="tool-hover" role="tooltip" hidden></div><div class="keyboard-tools"><button id="water-button" type="button">Select watering can</button><button id="lamp-button" type="button">Select light</button></div> <div id="lamp-controls" class="lamp-controls" hidden>${[
+   ["radius", "Range", 0.3, 1.15, 0.01],
+   ["power", "Intensity", 0, 100, 1],
  ]
    .map(
      ([key, label, min, max, step]) =>
        `<label for="lamp-${key}"><span>${label}<output id="lamp-${key}-value"></output></span><input id="lamp-${key}" type="range" min="${min}" max="${max}" step="${step}" data-lamp="${key}" aria-label="Lamp ${label.toLowerCase()}"/></label>`,
    )
-   .join("")}</div>
+   .join(
+     "",
+   )}<button id="tool-close" class="icon-button" type="button" aria-label="Close light controls" title="Close light controls">${icon("close")}</button></div>
+<div id="scene-loading" class="scene-loading">Making a little room for nature…</div></div>
  <p id="placement-help" class="placement-help" role="status" hidden>Click soil · arrows to aim · Enter to plant</p>
 </section>
  <aside class="environment-column"><section class="environment paper-panel" aria-labelledby="environment-title"><div class="panel-title"><span class="title-sun">${icon("sun")}</span><h2 id="environment-title">Feeling good?</h2></div><details id="metrics-guide" class="metrics-guide" hidden><summary>What do the numbers mean?</summary><p><strong>Comfort now</strong> responds to water and light here. <strong>Health</strong> is the plant’s current condition. <strong>Growth</strong> is its accumulated development. Health and growth update after Next Day; “Last day” records what already happened, not a forecast.</p></details><div id="plant-conditions"></div></section> <div class="day-controls"><div class="day-counter"><span>Little by little</span><strong id="day-number">Day 01</strong></div><button id="next-day" type="button" class="primary-button" aria-describedby="next-day-hint" disabled><span>Next Day</span>${icon("arrow")}</button><div class="reset-actions"><button id="reset-button" type="button" class="icon-button" aria-label="Reset experiment" title="Reset experiment">${icon("reset")}</button><button id="clear-button" type="button" class="icon-button" aria-label="Clear jar" title="Clear jar">${icon("trash")}</button></div><p id="next-day-hint" class="next-day-hint">Plant at least one to begin.</p></div></aside>
@@ -73,10 +72,10 @@ export function createUI(root) {
   }
   function render(state, busy = false) {
     $("#day-number").textContent = `Day ${String(state.day).padStart(2, "0")}`;
-    $("#plant-count").textContent = `${state.plants.length} / ${MAX_PLANTS}`;
+    $("#plant-count").textContent =
+      `${state.plants.length} planted · max ${MAX_PLANTS}`;
     const empty = state.plants.length === 0;
     $(".terrarium-column").dataset.empty = String(empty);
-    $("#planting-guide").hidden = !empty;
     $("#metrics-guide").hidden = empty;
     if (empty) {
       $("#metrics-guide").open = false;
@@ -84,9 +83,6 @@ export function createUI(root) {
     $("#environment-title").textContent = empty
       ? "Ready to plant?"
       : "Feeling good?";
-    $("#planting-instruction").innerHTML = selected
-      ? `Choose a soil spot for ${SPECIES[selected].name}.<small>Release to plant, or click a soil spot.</small>`
-      : `Drag a plant from the left onto the soil.<small>Or click a card, then click a soil spot.</small>`;
     const stressed = state.plants.filter(
       (p) => conditionsFor(state, p).comfort < 0.55,
     ).length;
@@ -105,6 +101,7 @@ export function createUI(root) {
     $(".environment").dataset.density =
       state.plants.length >= 4 ? "compact" : "normal";
     $("#next-day-hint").hidden = state.plants.length > 0;
+    $("#light-handle").disabled = busy;
     $("#next-day").disabled = state.plants.length === 0 || busy;
     $("#next-day").title =
       state.plants.length === 0 ? "Plant at least one to begin" : "";
@@ -133,18 +130,14 @@ export function createUI(root) {
           ? "Placing"
           : "Available";
     }
-    for (const key of ["azimuth", "reach", "radius", "power"]) {
+    for (const key of ["radius", "power"]) {
       const input = $("#lamp-" + key);
       input.value = state.lamp[key];
       input.disabled = busy;
       $("#lamp-" + key + "-value").textContent =
-        key === "azimuth"
-          ? `${Math.round(state.lamp[key])}°`
-          : key === "reach"
-            ? `${Math.round((state.lamp[key] / 1.45) * 100)}%`
-            : key === "radius"
-              ? state.lamp[key].toFixed(2)
-              : `${Math.round(state.lamp[key])}%`;
+        key === "radius"
+          ? `${Math.round(((state.lamp.radius - 0.3) / 0.85) * 100)}%`
+          : `${Math.round(state.lamp.power)}%`;
     }
     const conditions = $("#plant-conditions");
     for (const e of [...conditions.querySelectorAll(".condition-card")])
@@ -211,6 +204,8 @@ export function createUI(root) {
     },
     select(id) {
       selected = id;
+      $("#light-handle").style.pointerEvents =
+        id || tool !== "lamp" ? "none" : "auto";
       $("#placement-help").hidden = !id;
       $("#placement-help").textContent = id
         ? `${SPECIES[id].name} · click soil, or arrows + Enter`
@@ -226,13 +221,18 @@ export function createUI(root) {
       );
       $("#lamp-button").setAttribute("aria-pressed", String(value === "lamp"));
       $("#lamp-controls").hidden = value !== "lamp";
-      $("#tool-close").hidden = !value;
-      $("#tool-hint").textContent =
-        value === "water"
-          ? "Choose any patch. Arrow keys + Enter also work."
-          : value === "lamp"
-            ? "Drag the lamp. Drag the light spot to aim."
-            : "Drag the can or lamp to experiment.";
+      $("#light-handle").style.pointerEvents =
+        value === "lamp" ? "auto" : "none";
+      $("#light-handle").classList.toggle("active", value === "lamp");
+    },
+    hover(message, position) {
+      const e = $("#tool-hover");
+      e.hidden = !message;
+      if (message) {
+        e.textContent = message;
+        e.style.left = `${Math.max(105, Math.min($("#scene-container").clientWidth - 105, position.x))}px`;
+        e.style.top = `${Math.max(12, position.y - 48)}px`;
+      }
     },
     toast(message) {
       clearTimeout(toastTimer);

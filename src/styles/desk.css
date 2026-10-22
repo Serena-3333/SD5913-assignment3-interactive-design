@@ -1327,3 +1327,236 @@ body {
     padding: 7px 0;
   }
 }
+
+/* Explicit tool targets, camera instructions and capacity rather than progress. */
+.scene-heading {
+  padding-bottom: 5px;
+}
+.capacity-note {
+  display: inline-block;
+  margin-top: 6px;
+  padding: 5px 10px;
+  border-radius: 4px 7px 5px 3px;
+  background: #e5edbc;
+  color: #53663e;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+.view-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 5px 10px;
+  margin-bottom: 4px;
+  flex-shrink: 0;
+  color: #4f653e;
+  font-size: 12px;
+}
+.view-instruction,
+.view-reset {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.view-instruction > .icon,
+.view-reset > .icon {
+  height: 17px;
+  width: 17px;
+  flex-shrink: 0;
+}
+.view-reset {
+  background: #eee8c6;
+  border: 1px solid #bbc88b;
+  border-radius: 6px;
+  padding: 6px 8px;
+  color: #4f653e;
+  font-size: 12px;
+  white-space: nowrap;
+}
+.view-reset:hover {
+  background: #e3eab9;
+}
+.touch-orbit {
+  display: none;
+}
+.light-handle {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 4;
+  width: 44px;
+  height: 44px;
+  margin: -22px 0 0 -22px;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  cursor: grab;
+  touch-action: none;
+}
+.light-handle-disc {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  margin: 3px;
+  background: #fff1a8ec;
+  color: #8b6b1d;
+  border: 2px solid #c5a445;
+  border-radius: 50%;
+  box-shadow: 0 2px 0 #86642c33;
+  transition:
+    transform 100ms,
+    background 100ms;
+}
+.light-handle-disc > .icon {
+  width: 22px;
+  height: 22px;
+}
+.light-handle-label {
+  position: absolute;
+  top: 42px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 2px 6px;
+  background: #fff2c5e8;
+  color: #765f29;
+  font-size: 11px;
+  white-space: nowrap;
+  border-radius: 3px;
+  pointer-events: none;
+}
+.light-handle:hover .light-handle-disc,
+.light-handle:focus-visible .light-handle-disc,
+.light-handle.active .light-handle-disc {
+  background: #ffe17d;
+  transform: scale(1.1);
+}
+.light-handle.dragging {
+  cursor: grabbing;
+}
+.light-handle.light-off .light-handle-disc {
+  background: #f0edd7;
+  color: #777a61;
+  border-style: dashed;
+}
+.tool-hover {
+  position: absolute;
+  transform: translateX(-50%);
+  padding: 7px 10px;
+  background: #fff1c9;
+  color: #50613d;
+  border: 1px solid #cbd39f;
+  border-radius: 5px;
+  font-size: 12px;
+  z-index: 6;
+  pointer-events: none;
+  max-width: 205px;
+  text-align: center;
+}
+.lamp-controls {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  max-width: 450px;
+  width: 100%;
+}
+#tool-hint {
+  max-width: 210px;
+  color: #5c7049;
+  font-size: 12px;
+}
+.light-handle:focus-visible,
+.view-reset:focus-visible {
+  outline: 3px solid #607b4a;
+  outline-offset: 2px;
+}
+@media (max-width: 680px) {
+  .desktop-orbit {
+    display: none;
+  }
+  .touch-orbit {
+    display: inline;
+  }
+  .view-controls {
+    font-size: 11px;
+    padding: 4px 0;
+  }
+  .view-reset {
+    padding: 5px;
+    font-size: 11px;
+  }
+  .capacity-note {
+    font-size: 12px;
+    margin-top: 4px;
+  }
+  .lamp-controls {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+.lamp-controls {
+  margin-inline: auto;
+}
+
+/* Prop-first interaction: no duplicated dock, note, or persistent light badge. */
+.keyboard-tools {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  z-index: 7;
+}
+.keyboard-tools:focus-within {
+  top: 8px;
+  right: 8px;
+  width: auto;
+  height: auto;
+  clip-path: none;
+  display: flex;
+  gap: 8px;
+  padding: 8px;
+  background: #fff7dc;
+}
+.keyboard-tools button {
+  border: 1px solid #b6c18c;
+  padding: 5px 8px;
+  background: #fff7dc;
+  color: #4f653e;
+}
+.light-handle {
+  width: 32px;
+  height: 32px;
+  margin: -16px 0 0 -16px;
+  pointer-events: none;
+}
+.light-handle:focus-visible {
+  pointer-events: auto;
+  border-radius: 50%;
+  background: #ffedb566;
+}
+.scene-container .lamp-controls {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 5;
+  margin: 0;
+  width: min(92%, 440px);
+  padding: 12px 44px 12px 14px;
+  background: #f2edccef;
+}
+.scene-container .lamp-controls[hidden] {
+  display: none !important;
+}
+#tool-close {
+  position: absolute;
+  top: 10px;
+  right: 8px;
+  width: 25px;
+  height: 25px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .light-handle * {
+    transition: none;
+  }
+}

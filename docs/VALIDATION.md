@@ -20,3 +20,11 @@ Not verified: Safari/Firefox, actual touch hardware, older-Mac performance, phys
 ## Release verification · 2026-10-21
 
 The author approved release of the previously local refinement. All 27 Node tests and the production build passed again before publication. The existing interaction and growth checks above apply to this source revision.
+
+## Local tools/camera/capacity checks · 2026-10-22
+
+The focused tests/tools.mjs workflow passed four groups: water hover/highlight/drag without unintended data changes; fixed clickable lamp with two controls; direct target drag with health preservation and exact Escape restoration; rotated-view aiming, zero-intensity handle availability, keyboard aiming and visible camera reset. No JavaScript/WebGL console errors were reported. Desktop (1440 × 900) and mobile (390 × 844) captures were inspected; the mobile page and Next Day fit the viewport. Production compilation passed. Ecological rules were unchanged, so the full simulation/interaction/layout suites were not rerun for this iteration. Participant follow-up is pending. Changes remain local only.
+
+### Prop-hover/clutter follow-up · 2026-10-22
+
+The focused tools workflow passed after removing the central reminder and bottom dock. It checks absence of the removed UI, visible hover shells, unchanged can material emission/color, small lift and return, ecological-state invariance on hover, real watering, fixed-lamp selection, direct/rotated-view aiming, exact cancellation and keyboard access. Screenshots were inspected. Production compilation passed. Full suites were not repeated.

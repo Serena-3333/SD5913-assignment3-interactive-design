@@ -31,7 +31,7 @@ try {
     await page.locator("#terrarium-title").innerText(),
     /Drag a plant into the jar/,
   );
-  assert.ok(await page.locator("#planting-guide").isVisible());
+  assert.equal(await page.locator("#planting-guide").count(), 0);
   assert.equal(await page.locator("#soil-overview").count(), 0);
   assert.match(await page.locator(".environment").innerText(), /starts at 60%/);
   assert.match(
@@ -49,14 +49,10 @@ try {
   const q = await point(page, POINTS[0]);
   await page.mouse.click(q.x, q.y);
   await settle(page, 700);
-  assert.ok(await page.locator("#planting-guide").isHidden());
+  assert.equal(await page.locator("#planting-guide").count(), 0);
   assert.equal(await page.locator("#soil-overview").count(), 0);
   const row = page.locator(".condition-card").first();
-  for (const label of [
-    "Comfort now",
-    "Health",
-    "Growth",
-  ])
+  for (const label of ["Comfort now", "Health", "Growth"])
     assert.ok((await row.innerText()).includes(label));
   assert.ok(await row.locator(".comfort-value > span").isVisible());
   await page.locator("#metrics-guide summary").click();
@@ -73,7 +69,8 @@ try {
   const recorded = await row.locator(".daily-change").innerText();
   assert.match(recorded, /Last day · Day 02: Health/);
   const s = await snapshot(page);
-  await page.locator("#lamp-button").click();
+  await page.locator("#lamp-button").focus();
+  await page.keyboard.press("Enter");
   await page.locator("#lamp-power").fill("0");
   await page.locator("#lamp-power").dispatchEvent("input");
   await settle(page);
@@ -84,7 +81,8 @@ try {
   assert.equal(await row.locator(".daily-change").innerText(), recorded);
   assert.equal((await snapshot(page)).plants[0].health, s.plants[0].health);
   await page.screenshot({ path: "test-results/feedback-now-vs-last-day.png" });
-  await page.locator("#water-button").click();
+  await page.locator("#water-button").focus();
+  await page.keyboard.press("Enter");
   const waterPoint = await point(page, POINTS[0]);
   await page.mouse.click(waterPoint.x, waterPoint.y);
   await settle(page);
@@ -130,12 +128,7 @@ try {
   await reduced.waitForSelector("#scene-loading[hidden]", {
     state: "attached",
   });
-  assert.equal(
-    await reduced
-      .locator(".guide-arrow")
-      .evaluate((e) => getComputedStyle(e).animationName),
-    "none",
-  );
+  assert.equal(await reduced.locator(".guide-arrow").count(), 0);
   assert.deepEqual(errors, []);
   await writeFile(
     "test-results/feedback-report.json",

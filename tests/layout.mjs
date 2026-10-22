@@ -39,8 +39,10 @@ try {
   ]) {
     await page.setViewportSize({ width, height });
     await page.waitForTimeout(450);
-    if (await page.locator("#lamp-controls").isHidden())
-      await page.locator("#lamp-button").click({ force: true });
+    if (await page.locator("#lamp-controls").isHidden()) {
+      await page.locator("#lamp-button").focus();
+      await page.keyboard.press("Enter");
+    }
     await page.waitForTimeout(200);
     const layout = await page.evaluate(() => {
       const box = (s) => {

@@ -61,7 +61,7 @@ try {
     await page.waitForTimeout(450);
   }
   assert.equal(await page.locator(".condition-card").count(), 3);
-  assert.ok((await page.locator("#plant-count").innerText()).includes("3 / 5"));
+  assert.ok((await page.locator("#plant-count").innerText()).includes("3 planted · max 5"));
   await page.locator("#next-day").click();
   await page.waitForTimeout(900);
   assert.equal(await page.locator("#day-number").innerText(), "Day 02");

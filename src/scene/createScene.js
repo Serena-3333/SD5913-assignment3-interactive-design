@@ -10,6 +10,7 @@ import {
 } from "./plantFactory.js";
 import { createLamp } from "./lamp.js";
 import { createWateringCan } from "./wateringCan.js";
+import { createHoverOutline } from "./hoverOutline.js";
 export function createScene(container, getState) {
   const scene = new THREE.Scene(),
     renderer = new THREE.WebGLRenderer({
@@ -115,6 +116,27 @@ export function createScene(container, getState) {
     last = performance.now(),
     orbitActive = false;
   const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const aimLabel = container.querySelector("#light-handle");
+  const labelPoint = new THREE.Vector3();
+  const waterOutline = createHoverOutline(wateringCan.group);
+  const lampOutline = createHoverOutline(lamp.group);
+  let hoveredTool = null;
+  function updateAimLabel() {
+    const aim = getState().lamp.target;
+    labelPoint.set(aim.x, surfaceHeight(aim.x, aim.z), aim.z).project(camera);
+    const x = ((labelPoint.x + 1) / 2) * container.clientWidth;
+    const y = ((1 - labelPoint.y) / 2) * container.clientHeight;
+    aimLabel.hidden =
+      labelPoint.z > 1 ||
+      x < 15 ||
+      x > container.clientWidth - 15 ||
+      y < 15 ||
+      y > container.clientHeight - 15;
+    const transform = `translate(${x}px, ${y}px)`;
+    if (aimLabel.style.transform !== transform)
+      aimLabel.style.transform = transform;
+    aimLabel.classList.toggle("light-off", getState().lamp.power === 0);
+  }
   const target = new THREE.Vector3();
   function invalidate(duration = 350) {
     until = Math.max(until, performance.now() + duration);
@@ -165,6 +187,8 @@ export function createScene(container, getState) {
     const { width, height } = container.getBoundingClientRect();
     if (!width || !height) return;
     renderer.setSize(width, height, false);
+    waterOutline.resize(width, height);
+    lampOutline.resize(width, height);
     camera.aspect = width / height;
     camera.fov = THREE.MathUtils.radToDeg(
       2 *
@@ -212,6 +236,7 @@ export function createScene(container, getState) {
     wateringCan.animate(now / 1000, alpha);
     controls.update();
     renderer.render(scene, camera);
+    updateAimLabel();
     if (
       orbitActive ||
       plantsAnimating ||
@@ -240,6 +265,15 @@ export function createScene(container, getState) {
     sync,
     invalidate,
     studioLights: [hemisphere, key],
+    setHover(kind) {
+      if (hoveredTool === kind) return;
+      waterOutline.setVisible(kind === "water");
+      lampOutline.setVisible(kind === "lamp");
+      wateringCan.setHovered(kind === "water");
+      hoveredTool = kind;
+      lamp.setHovered(kind === "aim" || kind === "lamp");
+      invalidate(250);
+    },
     setTool(value) {
       tool = value;
       lamp.setActive(value === "lamp");

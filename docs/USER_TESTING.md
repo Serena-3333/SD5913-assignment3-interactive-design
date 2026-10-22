@@ -34,3 +34,23 @@ Automated rule/UI checks and viewport captures are developer validation; they do
 The author found the revised per-plant notes too tall: action explanations repeated the short diagnosis, and exact water/light numbers encouraged unnecessary numeric matching. The author also questioned the continued whole-jar average. This is author review of developer screenshots, not a new participant session.
 
 Removed action explanation text and per-root water/light readouts. Kept short current causes, comfort, health, growth and a compact dated daily health change; the historical cause remains available as the record's tooltip. Removed the live jar overview entirely and stated the initial 60% soil moisture only in empty-jar onboarding. Retained spatial calculations unchanged. Follow-up participant testing remains pending.
+
+## Tool discoverability and direct light aiming · 2026-10-22
+
+The author authorized local implementation of the remaining tool/lighting, camera-instruction and capacity findings. The supplied P01 conversation is still the evidence source; no new participant session or video inspection is claimed.
+
+- Added a persistent screen-space sun handle anchored to the actual light target. It remains pickable over plant foliage and while the light is off. Direct footprint dragging and click/keyboard targeting remain available.
+- Fixed the physical lamp in place for normal interaction. Clicking it selects the light tool; only Range and Intensity are exposed. This removes the front-facing lamp-drag difficulty instead of asking users to solve it with a different camera.
+- Water-can hover provides material highlighting, a grab cursor and a short contextual hint. The lamp uses a pointer cursor and click instruction; the light target uses a grab cursor. Hover effects end on departure or interaction, without continuous idle animation.
+- Moved explicit right-button rotation instructions and a labeled Reset view button above the jar. Touch layouts give the two-finger instruction.
+- Replaced the isolated capacity fraction with “N planted · max 5” beneath the scene title; the collection says one plant is enough. This denotes capacity, not required completion.
+
+The ecological formulas and accumulated plant data are unchanged. Follow-up participant testing of discoverability and aiming remains pending. This iteration is local only and awaits author approval before commit/publication.
+
+## Removing redundant cues after author review · 2026-10-22
+
+The author reviewed the local interface and requested removal of the central planting note, the persistent sun/“Drag light” badge and the bottom Water/Light dock and instruction note. These repeated the heading or obscured the scene. This is author feedback, not a new participant session.
+
+Removed those visual elements. Hovering the lamp now explains direct light-spot dragging; clicking the fixed lamp opens only Range/Intensity in an overlay, without changing the soil's screen position. A small aim point remains available in light-edit mode, with keyboard focus access retained. The watering can lifts by 0.09 illustrative model units and gains a warm outline on hover; the lamp gains the outline without lifting. Moving away removes the effects and returns the can to rest. The effects use shared-geometry shells during hover rather than changing object colors or adding a full-screen effect/continuous animation. Tool access for keyboard users is revealed on focus instead of occupying the bottom dock. Direct watering returns to neutral selection after the pour gesture.
+
+The focused tool workflow and production build passed; hover captures were inspected. No new user-acceptance results are claimed. This remains local and uncommitted.

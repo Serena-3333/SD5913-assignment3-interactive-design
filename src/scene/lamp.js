@@ -39,6 +39,7 @@ export function createLamp(scene) {
     joint2 = add(new THREE.IcosahedronGeometry(0.082, 1), cream);
   const head = new THREE.Group();
   head.userData.kind = "lamp";
+  group.userData.kind = "lamp";
   group.add(head);
   const shade = add(
     new THREE.CylinderGeometry(0.105, 0.34, 0.34, 12, 1, true),
@@ -76,6 +77,7 @@ export function createLamp(scene) {
   scene.add(aimHandle);
   scene.add(group, light, light.target);
   let active = false,
+    hovered = false,
     lastFrame,
     lastLamp;
   function span(mesh, a, b) {
@@ -131,9 +133,9 @@ export function createLamp(scene) {
     });
     footprint.mesh.visible = lamp.power > 0;
     footprint.material.uniforms.opacity.value =
-      ((active ? 0.95 : 0.48) * lamp.power) / 100;
+      ((active || hovered ? 0.95 : 0.6) * lamp.power) / 100;
     aimHandle.position.set(f.aim.x, f.aim.y + 0.055, f.aim.z);
-    aimHandle.visible = active;
+    aimHandle.visible = active || hovered;
   }
   return {
     group,
@@ -144,6 +146,29 @@ export function createLamp(scene) {
     update,
     get frame() {
       return lastFrame;
+    },
+    containsPoint(point) {
+      if (!point) return false;
+      // Hit-test the actual projected cone polygon in world XZ, not its screen pixels.
+      const a = footprint.mesh.geometry.attributes.position;
+      let inside = false;
+      for (let i = 1, j = a.count - 1; i < a.count; j = i++) {
+        const xi = a.getX(i),
+          zi = a.getZ(i),
+          xj = a.getX(j),
+          zj = a.getZ(j);
+        if (
+          zi > point.z !== zj > point.z &&
+          point.x < ((xj - xi) * (point.z - zi)) / (zj - zi) + xi
+        )
+          inside = !inside;
+      }
+      return inside;
+    },
+    setHovered(value) {
+      if (hovered === value) return;
+      hovered = value;
+      if (lastLamp) update(lastLamp);
     },
     setActive(value) {
       active = value;
