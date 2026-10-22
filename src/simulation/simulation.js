@@ -11,6 +11,8 @@ import {
   clampToSoil,
 } from "./environment.js";
 export const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+export const CRITICAL_HEALTH = 25;
+export const DEATH_AFTER_DAYS = 3;
 export const distanceToRange = (value, min, max) =>
   Math.max(min - value, 0, value - max);
 export const suitability = (value, range) =>
@@ -69,13 +71,13 @@ export function conditionsFor(state, plant) {
   const position = plant.position;
   const light = lightAt(state.lamp, position),
     moisture = moistureAt(state, position);
-  const comfort = comfortFor(plant.species, moisture, light);
+  const comfort = plant.dead ? 0 : comfortFor(plant.species, moisture, light);
   return {
     moisture,
     light,
     comfort,
     percent: Math.round(comfort * 100),
-    status: comfortStatus(comfort),
+    status: plant.dead ? "Dead" : comfortStatus(comfort),
   };
 }
 export const createInitialState = () => ({
@@ -124,6 +126,9 @@ export function plantAt(state, species, point) {
         health: 70,
         growth: 20,
         lastChange: null,
+        criticalDays: 0,
+        dead: false,
+        diedOnDay: null,
       },
     ],
   };
@@ -215,6 +220,9 @@ export const resetExperiment = (state) => ({
     health: 70,
     growth: 20,
     lastChange: null,
+    criticalDays: 0,
+    dead: false,
+    diedOnDay: null,
   })),
 });
 export function nextDay(state) {
@@ -223,6 +231,7 @@ export function nextDay(state) {
     const point = SOIL_POINTS[i];
     const evaporation = Math.round(4 + lightAt(state.lamp, point) / 25);
     const uptake = state.plants.reduce((sum, p) => {
+      if (p.dead) return sum;
       const d = Math.hypot(point.x - p.position.x, point.z - p.position.z);
       return sum + (d < 0.5 ? 2 * (1 - d / 0.5) : 0);
     }, 0);
@@ -235,6 +244,7 @@ export function nextDay(state) {
     soilMoisture: averageMoisture(moisture),
   };
   next.plants = state.plants.map((plant) => {
+    if (plant.dead) return plant;
     const { comfort, moisture, light } = conditionsFor(next, plant);
     const health = clamp(
       plant.health + Math.round(20 * (comfort - 0.75)),
@@ -243,13 +253,20 @@ export function nextDay(state) {
     );
     const increment =
       health < 40 ? 0 : comfort >= 0.8 ? 8 : comfort >= 0.55 ? 3 : 0;
+    const criticalDays =
+      health < CRITICAL_HEALTH ? (plant.criticalDays || 0) + 1 : 0;
+    const dead = criticalDays >= DEATH_AFTER_DAYS;
+    const finalHealth = dead ? 0 : health;
     return {
       ...plant,
-      health,
+      health: finalHealth,
+      criticalDays,
+      dead,
+      diedOnDay: dead ? next.day : null,
       growth: clamp(plant.growth + increment, 0, 100),
       lastChange: {
         day: next.day,
-        health: health - plant.health,
+        health: finalHealth - plant.health,
         growth: Math.min(100 - plant.growth, increment),
         reason: environmentalReason(plant.species, moisture, light),
       },

@@ -6,14 +6,14 @@ const flower =
   '<svg viewBox="0 0 60 60" fill="none" aria-hidden="true"><path d="M30 21C18 1 2 20 20 30 0 43 20 59 30 40c12 20 29 0 10-10 20-12 1-30-10-9Z" fill="currentColor"/><circle cx="30" cy="30" r="7" fill="#fff4c9"/></svg>';
 export function createUI(root) {
   root.innerHTML = `
- <header class="masthead"><a class="brand" href="./" aria-label="Pocket Terrarium home"><span class="brand-sticker">${icon("jar")}</span><div><h1>Pocket Terrarium<span class="title-spark">✳</span></h1><p>A tiny world shaped by your choices.</p></div></a><details class="help-menu"><summary>${icon("hand")}A little help</summary><div><strong>Make yourself a little garden.</strong><p>Drag a plant into the jar. Drag the can to water a patch. Drag the light spot on the soil; click the lamp for range and intensity. Range and intensity adjust the light. Plant one to five, including repeats. Then try Next Day. Hold the right mouse button and drag to rotate; two fingers on touch screens.</p><p>Click a tool, then a spot for an alternative to dragging. Esc cancels.</p></div></details></header>
+ <header class="masthead"><a class="brand" href="./" aria-label="Pocket Terrarium home"><span class="brand-sticker">${icon("jar")}</span><div><h1>Pocket Terrarium<span class="title-spark">✳</span></h1><p>A tiny world shaped by your choices.</p></div></a><details class="help-menu"><summary>${icon("hand")}A little help</summary><div><strong>Make yourself a little garden.</strong><p>Drag the can to water a patch. Drag the light spot on the soil; click the lamp for range and intensity. Plant one to five, including repeats. Then try Next Day. Hold the right mouse button and drag to rotate; two fingers on touch screens.</p><p>Click a tool, then a spot for an alternative to dragging. For keyboard planting, select a card, then use arrow keys and Enter. Esc cancels.</p></div></details></header>
  <main class="workspace">
- <div class="collection-shell"><aside id="plant-collection" class="collection paper-panel"><div class="panel-title"><span class="title-leaf">${icon("leaf")}</span><h2>Pick a plant</h2><button id="collection-close" class="icon-button" type="button" aria-label="Collapse plant collection" title="Collapse plant collection">${icon("close")}</button></div><p id="collection-instruction" class="section-note">Drag a card onto the soil. Or click a card, then the soil.</p><div class="plant-grid">${Object.entries(
+ <div class="collection-shell"><aside id="plant-collection" class="collection paper-panel"><div class="panel-title"><span class="title-leaf">${icon("leaf")}</span><h2>Pick a plant</h2><button id="collection-close" class="icon-button" type="button" aria-label="Collapse plant collection" data-tooltip="Collapse plant collection">${icon("close")}</button></div><p id="collection-instruction" class="section-note">Drag a card onto the soil. Or click a card, then the soil.</p><div class="plant-grid">${Object.entries(
    SPECIES,
  )
    .map(
      ([id, s], i) =>
-       `<button type="button" data-species="${id}" class="plant-card plant-${id}" aria-label="Choose ${s.name}; drag into the jar or click then choose soil" aria-describedby="collection-instruction" aria-pressed="false"><span class="card-check" aria-hidden="true">✓</span><img class="plant-thumbnail" alt="3D ${s.name}" draggable="false"/><strong>${s.name}</strong><span class="preferences"><span title="Preferred moisture">${icon("drop")}${{ High: "More water", Medium: "Moderate water", Low: "Less water" }[s.waterLabel]}</span><span title="Preferred light">${icon("sun")}${{ Soft: "Gentle light", Medium: "Filtered light", Bright: "Bright light" }[s.lightLabel]}</span></span><span class="plant-availability" hidden>Available</span></button>`,
+       `<button type="button" data-species="${id}" class="plant-card plant-${id}" aria-label="Choose ${s.name}; drag into the jar or click then choose soil" aria-describedby="collection-instruction" aria-pressed="false"><span class="card-check" aria-hidden="true">✓</span><img class="plant-thumbnail" alt="3D ${s.name}" draggable="false"/><strong>${s.name}</strong><span class="preferences"><span data-tooltip="Preferred moisture">${icon("drop")}${{ High: "More water", Medium: "Moderate water", Low: "Less water" }[s.waterLabel]}</span><span data-tooltip="Preferred light">${icon("sun")}${{ Soft: "Gentle light", Medium: "Filtered light", Bright: "Bright light" }[s.lightLabel]}</span></span><span class="plant-availability" hidden>Available</span></button>`,
    )
    .join(
      "",
@@ -29,13 +29,45 @@ export function createUI(root) {
    )
    .join(
      "",
-   )}<button id="tool-close" class="icon-button" type="button" aria-label="Close light controls" title="Close light controls">${icon("close")}</button></div>
+   )}<button id="tool-close" class="icon-button" type="button" aria-label="Close light controls" data-tooltip="Close light controls">${icon("close")}</button></div>
 <div id="scene-loading" class="scene-loading">Making a little room for nature…</div></div>
- <p id="placement-help" class="placement-help" role="status" hidden>Click soil · arrows to aim · Enter to plant</p>
+ <p id="placement-help" class="placement-help" role="status" hidden>Plant selected</p>
 </section>
- <aside class="environment-column"><section class="environment paper-panel" aria-labelledby="environment-title"><div class="panel-title"><span class="title-sun">${icon("sun")}</span><h2 id="environment-title">Feeling good?</h2></div><details id="metrics-guide" class="metrics-guide" hidden><summary>What do the numbers mean?</summary><p><strong>Comfort now</strong> responds to water and light here. <strong>Health</strong> is the plant’s current condition. <strong>Growth</strong> is its accumulated development. Health and growth update after Next Day; “Last day” records what already happened, not a forecast.</p></details><div id="plant-conditions"></div></section> <div class="day-controls"><div class="day-counter"><span>Little by little</span><strong id="day-number">Day 01</strong></div><button id="next-day" type="button" class="primary-button" aria-describedby="next-day-hint" disabled><span>Next Day</span>${icon("arrow")}</button><div class="reset-actions"><button id="reset-button" type="button" class="icon-button" aria-label="Reset experiment" title="Reset experiment">${icon("reset")}</button><button id="clear-button" type="button" class="icon-button" aria-label="Clear jar" title="Clear jar">${icon("trash")}</button></div><p id="next-day-hint" class="next-day-hint">Plant at least one to begin.</p></div></aside>
+ <aside class="environment-column"><section class="environment paper-panel" aria-labelledby="environment-title"><div class="panel-title"><span class="title-sun">${icon("sun")}</span><h2 id="environment-title">Feeling good?</h2></div><details id="metrics-guide" class="metrics-guide" hidden><summary>What do the numbers mean?</summary><p><strong>Comfort now</strong> responds to water and light here. <strong>Health</strong> is the plant’s current condition. <strong>Growth</strong> is its accumulated development. Health and growth update after Next Day; “Last day” records what already happened, not a forecast.</p></details><div id="plant-conditions"></div></section> <div class="day-controls"><div class="day-counter"><span>Little by little</span><strong id="day-number">Day 01</strong></div><button id="next-day" type="button" class="primary-button" aria-describedby="next-day-hint" disabled><span>Next Day</span>${icon("arrow")}</button><div class="reset-actions"><button id="reset-button" type="button" class="icon-button" aria-label="Reset experiment" data-tooltip="Reset experiment">${icon("reset")}</button><button id="clear-button" type="button" class="icon-button" aria-label="Clear jar" data-tooltip="Clear jar">${icon("trash")}</button></div><p id="next-day-hint" class="next-day-hint">Plant at least one to begin.</p></div></aside>
  </main><div id="toast" class="toast" role="status" aria-live="polite" hidden></div><div id="drag-cursor" class="drag-cursor" hidden><img alt=""/><span></span></div><dialog id="confirm-dialog"><form method="dialog"><span class="dialog-flower">${flower}</span><h2 id="confirm-title"></h2><p id="confirm-description"></p><div class="dialog-actions"><button type="submit" class="secondary-button" value="cancel">Keep growing</button><button id="confirm-action" type="submit" class="primary-button" value="confirm">Reset</button></div></form></dialog>`;
   const $ = (selector) => root.querySelector(selector);
+  const hintController = new AbortController();
+  const hint = document.createElement("div");
+  hint.className = "interface-tooltip";
+  hint.id = "interface-tooltip";
+  hint.setAttribute("role", "tooltip");
+  hint.hidden = true;
+  root.append(hint);
+  let hintTarget = null;
+  function hideHint() { hint.hidden = true; hintTarget = null; }
+  function showHint(event) {
+    const target = event.target.closest("[data-tooltip]");
+    if (!target?.dataset.tooltip || target === hintTarget) return;
+    hintTarget = target;
+    hint.textContent = target.dataset.tooltip;
+    hint.hidden = false;
+    const rect = target.getBoundingClientRect();
+    const x = Math.max(hint.offsetWidth / 2 + 8, Math.min(innerWidth - hint.offsetWidth / 2 - 8, rect.x + rect.width / 2));
+    const y = rect.top >= hint.offsetHeight + 16 ? rect.top - hint.offsetHeight - 8 : rect.bottom + 8;
+    hint.style.left = `${x}px`;
+    hint.style.top = `${Math.max(8, Math.min(innerHeight - hint.offsetHeight - 8, y))}px`;
+  }
+  for (const type of ["pointerover", "focusin"])
+    root.addEventListener(type, showHint, { signal: hintController.signal });
+  for (const type of ["pointerout", "focusout"])
+    root.addEventListener(type, (event) => {
+      if (!hintTarget?.contains(event.relatedTarget)) hideHint();
+    }, { signal: hintController.signal });
+  root.addEventListener("pointerdown", hideHint, { signal: hintController.signal });
+  root.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") hideHint();
+  }, { signal: hintController.signal });
+  root.addEventListener("scroll", hideHint, { capture: true, signal: hintController.signal });
   let selected = null,
     tool = null,
     toastTimer,
@@ -82,16 +114,18 @@ export function createUI(root) {
     }
     $("#environment-title").textContent = empty
       ? "Ready to plant?"
-      : "Feeling good?";
+      : state.plants.some((p) => p.dead) ? "Garden status" : "Feeling good?";
     const stressed = state.plants.filter(
-      (p) => conditionsFor(state, p).comfort < 0.55,
+      (p) => !p.dead && conditionsFor(state, p).comfort < 0.55,
     ).length;
     $("#terrarium-title").textContent =
       state.plants.length === 0
         ? selected
           ? `Place your ${SPECIES[selected].name}`
-          : "Drag a plant into the jar"
-        : stressed && state.day > 1
+          : "Your little garden"
+        : state.plants.every((p) => p.dead)
+          ? "A fresh start?"
+          : stressed && state.day > 1
           ? "A little care today"
           : state.day > 1
             ? "Growing together!"
@@ -103,7 +137,7 @@ export function createUI(root) {
     $("#next-day-hint").hidden = state.plants.length > 0;
     $("#light-handle").disabled = busy;
     $("#next-day").disabled = state.plants.length === 0 || busy;
-    $("#next-day").title =
+    $("#next-day").dataset.tooltip =
       state.plants.length === 0 ? "Plant at least one to begin" : "";
     $("#next-day span").textContent = busy ? "Growing…" : "Next Day";
     for (const id of [
@@ -144,7 +178,7 @@ export function createUI(root) {
       if (!state.plants.some((p) => p.id === e.dataset.condition)) e.remove();
     conditions.querySelector(".conditions-empty")?.remove();
     if (!state.plants.length)
-      conditions.innerHTML = `<div class="conditions-empty"><span class="empty-sprout">${icon("leaf")}</span><strong>Plant something to see how it feels.</strong><p>Choose a plant, then place it on the soil. The jar starts at 60% soil moisture. Watch each plant’s comfort as you experiment.</p></div>`;
+      conditions.innerHTML = `<div class="conditions-empty"><span class="empty-sprout">${icon("leaf")}</span><p>The soil starts at 60% moisture.</p></div>`;
     for (const plant of state.plants) {
       const c = conditionsFor(state, plant);
       let card = conditions.querySelector(`[data-condition="${plant.id}"]`);
@@ -152,21 +186,33 @@ export function createUI(root) {
         card = document.createElement("article");
         card.className = "condition-card";
         card.dataset.condition = plant.id;
-        card.innerHTML = `<div class="condition-top"><h4>${SPECIES[plant.species].name} <small>${plant.id.split("-")[1]}</small><button type="button" class="plant-remove" data-remove="${plant.id}" aria-label="Remove ${SPECIES[plant.species].name} ${plant.id.split("-")[1]}" title="Remove plant">×</button></h4><div class="comfort-value"><span>Comfort now</span><strong><b>0</b>%</strong></div></div><div class="meter" role="meter" aria-label="Current comfort of ${SPECIES[plant.species].name} ${plant.id.split("-")[1]}" aria-valuemin="0" aria-valuemax="100"><div></div></div><div class="condition-middle"><span class="status-badge"></span></div><div class="live-advice"></div><div class="local-values"><span class="health-value" title="Current health; updates after Next Day">${icon("heart")}<span>Health</span><strong>70</strong></span><span class="growth-value" title="Accumulated growth; updates after Next Day">${icon("leaf")}<span>Growth</span><b></b><small>%</small></span></div><p class="daily-change" hidden></p>`;
+        card.innerHTML = `<div class="condition-top"><h4>${SPECIES[plant.species].name} <small>${plant.id.split("-")[1]}</small><button type="button" class="plant-remove" data-remove="${plant.id}" aria-label="Remove ${SPECIES[plant.species].name} ${plant.id.split("-")[1]}" data-tooltip="Remove plant">×</button></h4><div class="comfort-value"><span>Comfort now</span><strong><b>0</b>%</strong><em class="death-label" hidden>Dead</em></div></div><div class="meter" role="meter" aria-label="Current comfort of ${SPECIES[plant.species].name} ${plant.id.split("-")[1]}" aria-valuemin="0" aria-valuemax="100"><div></div></div><div class="condition-middle"><span class="status-badge"></span></div><div class="live-advice"></div><div class="local-values"><span class="health-value">${icon("heart")}<span>Health</span><strong>70</strong></span><span class="growth-value" data-tooltip="Accumulated growth; updates after Next Day">${icon("leaf")}<span>Growth</span><b></b><small>%</small></span></div><p class="daily-change" hidden></p>`;
         conditions.append(card);
       }
       card.dataset.status =
-        c.comfort >= 0.8
+        plant.dead ? "dead" : c.comfort >= 0.8
           ? "comfortable"
           : c.comfort >= 0.55
             ? "adjust"
             : "stressed";
+      card.dataset.critical = String(!plant.dead && plant.criticalDays > 0);
+      const deadLabel = card.querySelector(".death-label");
+      deadLabel.hidden = !plant.dead;
+      deadLabel.dataset.tooltip = "This plant has dried out. Remove it or reset to start again.";
+      card.querySelector(".comfort-value > span").hidden = !!plant.dead;
+      card.querySelector(".comfort-value > strong").hidden = !!plant.dead;
+      card.querySelector(".meter").hidden = !!plant.dead;
+      card.querySelector(".local-values").hidden = !!plant.dead;
       animateNumber(card.querySelector(".comfort-value b"), c.percent);
       card
         .querySelector(".comfort-value")
-        .setAttribute("aria-label", `Comfort now: ${c.percent} percent`);
+        .setAttribute("aria-label", plant.dead ? `Dead; dried out on Day ${plant.diedOnDay}` : `Comfort now: ${c.percent} percent`);
       card.querySelector(".meter").setAttribute("aria-valuenow", c.percent);
-      const advice = liveAdvice(plant.species, c.moisture, c.light);
+      const advice = plant.dead
+        ? [{ key: "dead", cause: `Dried out · Day ${String(plant.diedOnDay).padStart(2, "0")}` }]
+        : liveAdvice(plant.species, c.moisture, c.light);
+      if (!plant.dead && plant.criticalDays > 0)
+        advice.unshift({ key: "critical", cause: "Critical" });
       const adviceHTML = advice
         .map((a) => `<p data-cause="${a.key}"><strong>${a.cause}</strong></p>`)
         .join("");
@@ -184,10 +230,10 @@ export function createUI(root) {
       card.querySelector(".growth-value b").textContent = plant.growth;
       card.querySelector("[data-remove]").disabled = busy;
       const note = card.querySelector(".daily-change");
-      note.hidden = !plant.lastChange;
+      note.hidden = plant.dead || !plant.lastChange;
       if (plant.lastChange) {
         note.textContent = dayRecord(plant.lastChange);
-        note.title = `Recorded on Day ${plant.lastChange.day}: ${plant.lastChange.reason}; growth +${plant.lastChange.growth}. Not a forecast.`;
+        note.dataset.tooltip = `Recorded on Day ${plant.lastChange.day}: ${plant.lastChange.reason}; growth +${plant.lastChange.growth}. Not a forecast.`;
       }
     }
   }
@@ -195,6 +241,21 @@ export function createUI(root) {
     if ($("#confirm-dialog").returnValue === "confirm") pendingConfirmation?.();
     pendingConfirmation = null;
   });
+  function positionPopup(element, anchor, beside = false) {
+    const container = $("#scene-container");
+    const width = element.offsetWidth;
+    const height = element.offsetHeight;
+    const margin = 8;
+    let x = anchor.x;
+    let y = anchor.y - height - 12;
+    if (beside) {
+      const roomRight = anchor.x + width + 18 <= container.clientWidth - margin;
+      x += (roomRight ? 1 : -1) * (width / 2 + 18);
+      y = anchor.y - height / 2;
+    }
+    element.style.left = `${Math.max(width / 2 + margin, Math.min(container.clientWidth - width / 2 - margin, x))}px`;
+    element.style.top = `${Math.max(margin, Math.min(container.clientHeight - height - margin, y))}px`;
+  }
   return {
     $,
     render,
@@ -208,7 +269,7 @@ export function createUI(root) {
         id || tool !== "lamp" ? "none" : "auto";
       $("#placement-help").hidden = !id;
       $("#placement-help").textContent = id
-        ? `${SPECIES[id].name} · click soil, or arrows + Enter`
+        ? `${SPECIES[id].name} selected`
         : "";
     },
     tool(value) {
@@ -227,11 +288,12 @@ export function createUI(root) {
     },
     hover(message, position) {
       const e = $("#tool-hover");
+      const opening = e.hidden || e.textContent !== message;
       e.hidden = !message;
       if (message) {
         e.textContent = message;
-        e.style.left = `${Math.max(105, Math.min($("#scene-container").clientWidth - 105, position.x))}px`;
-        e.style.top = `${Math.max(12, position.y - 48)}px`;
+        // Keep the popup still for the full hover, including the can's lift.
+        if (opening) positionPopup(e, position, true);
       }
     },
     toast(message) {
@@ -289,8 +351,7 @@ export function createUI(root) {
       e.hidden = !point;
       if (point) {
         e.innerHTML = `<strong>${SPECIES[species].name}<span>${error || `${percent}% comfort`}</span></strong>`;
-        e.style.left = `${Math.max(95, Math.min($("#scene-container").clientWidth - 100, position.x))}px`;
-        e.style.top = `${Math.max(70, position.y - 100)}px`;
+        positionPopup(e, { x: position.x, y: position.y - 28 });
       }
     },
     waterPreview(valid, position) {
@@ -298,8 +359,7 @@ export function createUI(root) {
       e.hidden = !valid;
       if (valid) {
         e.innerHTML = "<strong>A little rain, right here.</strong>";
-        e.style.left = `${Math.max(100, Math.min($("#scene-container").clientWidth - 110, position.x))}px`;
-        e.style.top = `${Math.max(55, position.y - 60)}px`;
+        positionPopup(e, { x: position.x, y: position.y - 22 });
       }
     },
     hidePreview() {
@@ -312,13 +372,15 @@ export function createUI(root) {
       $("#confirm-description").textContent =
         kind === "clear"
           ? "All plants, water and light will reset."
-          : "Keep your plants and their spots. Reset water, light, health and growth.";
+          : "Restore all plants, including dried ones, in their spots. Reset water, light, health and growth.";
       $("#confirm-action").textContent =
         kind === "clear" ? "Clear jar" : "Start again";
       $("#confirm-dialog").returnValue = "";
       $("#confirm-dialog").showModal();
     },
     dispose() {
+      hintController.abort();
+      hint.remove();
       clearTimeout(toastTimer);
       clearTimeout(collectionTimer);
       clearTimeout(collectionDelay);

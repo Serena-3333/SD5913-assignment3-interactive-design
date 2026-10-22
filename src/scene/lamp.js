@@ -109,9 +109,10 @@ export function createLamp(scene) {
     light.position.copy(V(f.emitter));
     light.target.position.copy(V(f.aim));
     light.angle = f.halfAngle;
-    light.intensity = (lamp.power / 100) * 28;
+    // Hover only brightens the rendered lamp; simulation power stays unchanged.
+    light.intensity = (lamp.power / 100) * 28 * (hovered ? 1.4 : 1);
     light.shadow.camera.updateProjectionMatrix();
-    bulbMat.emissiveIntensity = (lamp.power / 100) * 0.9;
+    bulbMat.emissiveIntensity = (lamp.power / 100) * (hovered ? 1.5 : 0.9);
     const axis = V(f.direction),
       right = new THREE.Vector3()
         .crossVectors(axis, new THREE.Vector3(0, 1, 0))

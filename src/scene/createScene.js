@@ -299,13 +299,13 @@ export function createScene(container, getState) {
       }
       invalidate();
     },
-    preview(species, point, health = 70, growth = 20) {
+    preview(species, point, health = 70, growth = 20, dead = false) {
       if (ghost?.userData.species !== species) {
         if (ghost) disposePlant(ghost);
         ghost = createPlant(species, { ghost: true });
-        animatePlant(ghost, { health, growth }, 0, { instant: true });
         scene.add(ghost);
       }
+      animatePlant(ghost, { health, growth, dead }, 0, { instant: true });
       ghost.visible = !!point;
       if (point)
         ghost.position.set(

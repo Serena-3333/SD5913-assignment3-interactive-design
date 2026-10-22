@@ -31,6 +31,8 @@ import {
   nextDay,
   resetExperiment,
   environmentalReason,
+  CRITICAL_HEALTH,
+  DEATH_AFTER_DAYS,
 } from "../src/simulation/simulation.js";
 const near = (a, b, e = 1e-8) => assert.ok(Math.abs(a - b) < e, `${a} != ${b}`);
 const two = () =>
@@ -291,6 +293,52 @@ test("long experiments are deterministic and all values remain bounded", () => {
   assert.deepEqual(a, b);
   assert.ok(a.moisture.every((v) => v >= 0 && v <= 100));
   assert.ok(
-    a.plants.every((p) => p.health >= 15 && p.health <= 100 && p.growth <= 100),
+    a.plants.every((p) => (p.dead ? p.health === 0 : p.health >= 15) && p.health <= 100 && p.growth <= 100),
   );
+});
+
+test("death requires three consecutive completed days below 25, with warning days first", () => {
+  assert.equal(CRITICAL_HEALTH, 25);
+  assert.equal(DEATH_AFTER_DAYS, 3);
+  let s = plantAt(createInitialState(), "moss", { x: 0, z: 0 });
+  s = { ...s, moisture: s.moisture.map(() => 0), soilMoisture: 0,
+    plants: s.plants.map(p => ({ ...p, health: 20 })) };
+  const original = structuredClone(s);
+  for (let day = 1; day <= 3; day++) {
+    s = nextDay(s);
+    assert.equal(s.plants[0].criticalDays, day);
+    assert.equal(s.plants[0].dead, day === 3);
+  }
+  assert.equal(original.plants[0].criticalDays, 0);
+  assert.equal(s.plants[0].health, 0);
+  assert.equal(s.plants[0].diedOnDay, 4);
+  assert.equal(conditionsFor(s, s.plants[0]).status, "Dead");
+  assert.equal(s.plants[0].lastChange.health, -15);
+});
+
+test("recovery to the threshold or above breaks the low-health streak", () => {
+  let s = plantAt(createInitialState(), "moss", { x: 0, z: 0 });
+  s = setLamp({ ...s, moisture: s.moisture.map(() => 75), soilMoisture: 75,
+    plants: s.plants.map(p => ({ ...p, health: 22, criticalDays: 2 })) }, { power: 0 });
+  const next = nextDay(s);
+  assert.equal(next.plants[0].health, 25);
+  assert.equal(next.plants[0].criticalDays, 0);
+  assert.equal(next.plants[0].dead, false);
+});
+
+test("dead plants persist, stop uptake and never revive from water or light; reset revives them", () => {
+  let s = plantAt(createInitialState(), "fern", { x: 0.2, z: 0.1 });
+  s = { ...s, plants: s.plants.map(p => ({ ...p, health: 0, dead: true,
+    criticalDays: 3, diedOnDay: 2, growth: 60 })) };
+  const watered = waterSoil(s, { x: 0.2, z: 0.1 });
+  const next = nextDay(watered);
+  assert.deepEqual(next.plants, s.plants);
+  const withoutRoots = nextDay({ ...watered, plants: watered.plants.map(p => ({ ...p, position: { x: 100, z: 100 } })) });
+  assert.deepEqual(next.moisture, withoutRoots.moisture);
+  const reset = resetExperiment(next);
+  assert.equal(reset.plants[0].dead, false);
+  assert.equal(reset.plants[0].criticalDays, 0);
+  assert.equal(reset.plants[0].diedOnDay, null);
+  assert.equal(reset.plants[0].health, 70);
+  assert.deepEqual(reset.plants[0].position, s.plants[0].position);
 });

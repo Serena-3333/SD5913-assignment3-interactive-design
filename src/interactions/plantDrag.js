@@ -106,6 +106,19 @@ export function createInteractions(
     world.setHover(null);
     ui.hover(null);
   }
+  function toolAnchor(kind) {
+    const anchor = new THREE.Vector3();
+    if (kind === "water") {
+      world.wateringCan.group.getWorldPosition(anchor);
+      anchor.y += 0.35;
+    } else if (kind === "lamp") {
+      world.lamp.head.getWorldPosition(anchor);
+    } else {
+      world.lamp.aimHandle.getWorldPosition(anchor);
+    }
+    const p = world.project(anchor);
+    return { x: p.x, y: p.y - 20 };
+  }
   function showHover(e) {
     hoverFrame = 0;
     if (drag || isBusy() || !world.controls.enabled) return;
@@ -115,18 +128,13 @@ export function createInteractions(
     }
     if (lightHandle.contains(e.target)) {
       world.setHover("aim");
-      const r = canvas.getBoundingClientRect();
-      ui.hover("Drag to move the light spot", {
-        x: e.clientX - r.left,
-        y: e.clientY - r.top,
-      });
+      ui.hover("Drag to move the light spot", toolAnchor("aim"));
       return;
     }
     if (e.target !== canvas) {
       clearHover();
       return;
     }
-    const r = canvas.getBoundingClientRect();
     let kind = null;
     if (selected) canvas.style.cursor = "crosshair";
     else {
@@ -161,7 +169,7 @@ export function createInteractions(
           : kind === "aim"
             ? "Drag the light spot to aim"
             : null,
-      { x: e.clientX - r.left, y: e.clientY - r.top },
+      kind ? toolAnchor(kind) : null,
     );
   }
   function queueHover(e) {
@@ -222,7 +230,7 @@ export function createInteractions(
     const error = placementError(getState(), point, movingId);
     const plant = getState().plants.find((p) => p.id === movingId);
     world.highlight(point, !error);
-    world.preview(species, point, plant?.health, plant?.growth);
+    world.preview(species, point, plant?.health, plant?.growth, plant?.dead);
     if (point) {
       const c = conditionsFor(getState(), { species, position: point });
       ui.preview(
@@ -236,7 +244,7 @@ export function createInteractions(
             point.z,
           ),
         ),
-        error,
+        error || (plant?.dead ? "Dried out" : null),
       );
     } else ui.hidePreview();
     return error;

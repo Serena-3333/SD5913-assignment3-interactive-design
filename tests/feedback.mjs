@@ -29,14 +29,14 @@ try {
   await mkdir("test-results", { recursive: true });
   assert.match(
     await page.locator("#terrarium-title").innerText(),
-    /Drag a plant into the jar/,
+    /Your little garden/,
   );
   assert.equal(await page.locator("#planting-guide").count(), 0);
   assert.equal(await page.locator("#soil-overview").count(), 0);
   assert.match(await page.locator(".environment").innerText(), /starts at 60%/);
   assert.match(
     await page.locator(".conditions-empty").innerText(),
-    /Plant something/,
+    /starts at 60%/,
   );
   const card = page.locator('[data-species="moss"]');
   assert.equal(await card.evaluate((e) => getComputedStyle(e).cursor), "grab");

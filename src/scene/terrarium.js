@@ -7,6 +7,7 @@ import {
 import { moistureAt } from "../simulation/simulation.js";
 import { mergeDecorations } from "./meshBatching.js";
 import { stemBetween } from "./plantFactory.js";
+import { createSoilCracks } from "./soilCracks.js";
 export { SOIL_Y } from "../simulation/environment.js";
 export function createTerrarium(scene) {
   const group = new THREE.Group();
@@ -128,15 +129,18 @@ export function createTerrarium(scene) {
     }),
   );
   const position = soilGeometry.attributes.position,
-    dry = new THREE.Color(0xc49257),
-    wet = new THREE.Color(0x66432f),
+    dry = new THREE.Color(0xdcb778),
+    normal = new THREE.Color(0xb67c43),
+    wet = new THREE.Color(0x49301f),
     color = new THREE.Color();
+  const cracks = createSoilCracks(group, soilSurface);
   function updateSoil(state) {
     for (let i = 0; i < position.count; i++) {
       const x = position.getX(i),
         z = position.getZ(i),
         moisture = moistureAt(state, { x, z });
-      color.copy(dry).lerp(wet, (moisture / 100) * 0.78);
+      if (moisture <= 60) color.copy(dry).lerp(normal, moisture / 60);
+      else color.copy(normal).lerp(wet, ((moisture - 60) / 40) ** 0.75);
       const variation = ((Math.floor(i / 3) % 5) - 2) * 0.017;
       color.offsetHSL(0, 0, variation);
       colors[i * 3] = color.r;
@@ -144,6 +148,7 @@ export function createTerrarium(scene) {
       colors[i * 3 + 2] = color.b;
     }
     soilGeometry.attributes.color.needsUpdate = true;
+    cracks.update(state);
   }
   const stone = mat(0x9ba388),
     stoneLight = mat(0xc2c5a1);
@@ -275,5 +280,5 @@ export function createTerrarium(scene) {
     item.castShadow = false;
     item.renderOrder = 8;
   }
-  return { group, soilSurface, updateSoil, glass };
+  return { group, soilSurface, updateSoil, glass, cracks };
 }

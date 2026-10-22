@@ -117,3 +117,21 @@ Focused validation for this iteration: four tool/camera/capacity workflow groups
 ## Reduced visual clutter and prop hover · 2026-10-22 · local only
 
 Responded to the author's screenshot review by removing the redundant planting note, persistent sun/Drag light badge and bottom tool dock/instruction. Retained top-level planting guidance, direct prop gestures and keyboard focus access. Light settings now overlay the scene only when the fixed lamp is selected, avoiding layout shifts during aiming. Replaced material brightening with warm back-face outline shells sharing the prop geometry; the can additionally eases 0.09 units upward and settles back on pointer departure. The lamp does not lift. Focused checks confirmed unchanged ecological data/material colors, hover outlines/lift/restoration and continued water/aim/cancellation/keyboard behavior, with no JS/WebGL errors. Production compilation passed; captures were inspected. Updated docs/USER_TESTING.md and kept all changes local.
+
+
+## Soil feedback and plant lifecycle · 2026-10-22 · local only
+
+- Restored the original header and favicon after the author rejected the replacement. Retained the previous card-color fix and stationary tool hints. Unified placement/tool/interface hover hints with a translucent fill; replaced native opaque title hints with anchored HTML popups.
+- Strengthened the local dry/normal/wet soil palette. Added a preallocated deterministic Voronoi crack mesh: local moisture below 20% controls width/opacity, and watering closes cracks. It follows the actual faceted soil surface, adds one draw only when dry, and updates only when the moisture field changes.
+- Added an explicit lifecycle rule: post-update health below 25 for three consecutive Next Day actions causes death. Recovery to 25 or higher clears the streak; warning days are visible. Dead plants keep their identities, positions and structural growth, remain as collapsed brown models, stop uptake/growth and cannot recover through ordinary care. Reset explicitly starts them alive again. Status notes announce death and its day instead of offering misleading live comfort/care diagnoses.
+- Developer validation: 36 Node tests passed, including threshold boundary/recovery, irreversible death, dead-root consumption, reset, four-species dead poses and soil feedback. The lifecycle browser check exercised actual watering and daily progression through warnings/death, persistent corpses/cracks and reset; tool checks and all 22 existing browser acceptance checks passed with no JavaScript/WebGL errors. Inspected actual wet/dry/dead captures. These checks are implementation validation, not a new participant user test. No commit, push or deployment is authorized.
+
+
+## Simpler planting and critical feedback · 2026-10-22 · local only
+
+Author review requested removing the Health hover hint, simplifying the low-health warning to “Critical” without a death countdown, and emphasizing the associated Health label/value. Removed the corresponding native/custom hints and retained the lifecycle calculations unchanged. Consolidated visible planting-method instructions in the plant collection; the central empty heading is neutral, the empty status note only explains initial moisture, and selection feedback only names the selected plant. Keyboard instructions remain in optional Help. This is author review, not a new participant test. Changes remain local.
+
+
+## Publication approved · 2026-10-22
+
+The author approved publishing the accumulated local soil/lifecycle and UI refinements. All 36 Node checks and the production build passed before submission. The prior local-only entries document the review stage; the published revision and deployment result are tracked in Git and GitHub Actions.

@@ -125,3 +125,22 @@ test("reduced motion snaps to the authoritative state without a growth pulse", (
     disposePlant(model);
   }
 });
+
+test("death leaves a brown collapsed model at its roots and reset restores the living pose", () => {
+  for (const species of ["moss", "fern", "succulent", "fittonia"]) {
+    const model = createPlant(species);
+    try {
+      instant(model, 70, 60);
+      const livingHeight = model.scale.y, livingColor = model.userData.materials[0].color.clone();
+      animatePlant(model, { health: 0, growth: 60, dead: true }, 0, { instant: true });
+      assert.equal(model.userData.visualDead, 1);
+      assert.ok(model.scale.y < livingHeight * 0.6);
+      assert.ok(!model.userData.materials[0].color.equals(livingColor));
+      assert.equal(model.userData.halo.visible, false);
+      assert.equal(animatePlant(model, { health: 0, growth: 60, dead: true }, 0.2), false);
+      instant(model, 70, 60);
+      assert.equal(model.scale.y, livingHeight);
+      assert.ok(model.userData.materials[0].color.equals(livingColor));
+    } finally { disposePlant(model); }
+  }
+});

@@ -299,6 +299,7 @@ export function createPlant(species, { ghost = false } = {}) {
   root.userData.halo = halo;
   root.userData.visualHealth = 70;
   root.userData.visualGrowth = 20;
+  root.userData.visualDead = 0;
   root.userData.appear = ghost ? 1 : 0.01;
   root.userData.speciesScale = {
     moss: 1.04,
@@ -310,24 +311,28 @@ export function createPlant(species, { ghost = false } = {}) {
   return root;
 }
 const yellow = new THREE.Color(0xb69c4f);
+const deadBrown = new THREE.Color(0x896249);
 // Growth changes structure; health temporarily changes vigor and posture.
 // Both are visual projections of the simulation, never inputs to its rules.
 export function animatePlant(root, plant, dt, { instant = false } = {}) {
   const d = root.userData;
-  if (d.targetHealth !== plant.health || d.targetGrowth !== plant.growth) {
+  if (d.targetHealth !== plant.health || d.targetGrowth !== plant.growth || d.targetDead !== !!plant.dead) {
     const growing =
       d.targetGrowth !== undefined && plant.growth > d.targetGrowth;
     d.transition = {
       health: d.visualHealth,
       growth: d.visualGrowth,
+      dead: d.visualDead,
       elapsed: 0,
       growing,
     };
     d.targetHealth = plant.health;
     d.targetGrowth = plant.growth;
+    d.targetDead = !!plant.dead;
   }
   const beforeHealth = d.visualHealth,
     beforeGrowth = d.visualGrowth,
+    beforeDead = d.visualDead,
     beforeAppear = d.appear;
   const t = d.transition;
   t.elapsed = instant ? 1.1 : Math.min(1.1, t.elapsed + dt);
@@ -335,6 +340,7 @@ export function animatePlant(root, plant, dt, { instant = false } = {}) {
     eased = progress * progress * (3 - 2 * progress);
   d.visualHealth = THREE.MathUtils.lerp(t.health, plant.health, eased);
   d.visualGrowth = THREE.MathUtils.lerp(t.growth, plant.growth, eased);
+  d.visualDead = THREE.MathUtils.lerp(t.dead, plant.dead ? 1 : 0, eased);
   d.appear = instant
     ? 1
     : THREE.MathUtils.lerp(d.appear, 1, 1 - Math.exp(-dt * 10));
@@ -350,12 +356,15 @@ export function animatePlant(root, plant, dt, { instant = false } = {}) {
       d.appear *
       (1 + pulse * 0.035),
   );
+  root.scale.y *= 1 - d.visualDead * 0.4;
+  root.scale.x *= 1 - d.visualDead * 0.12;
+  root.scale.z *= 1 - d.visualDead * 0.12;
   d.halo.visible = pulse > 0.001;
   d.halo.material.opacity = pulse * 0.55;
   d.halo.scale.setScalar(0.8 + progress * 0.65);
   const changed =
     Math.abs(beforeHealth - d.visualHealth) +
-      Math.abs(beforeGrowth - d.visualGrowth) >
+      Math.abs(beforeGrowth - d.visualGrowth) + Math.abs(beforeDead - d.visualDead) >
     0.00001;
   if (!changed && d.poseReady)
     return Math.abs(beforeAppear - d.appear) > 0.00001;
@@ -363,7 +372,7 @@ export function animatePlant(root, plant, dt, { instant = false } = {}) {
   const stress = THREE.MathUtils.clamp((70 - d.visualHealth) / 65, 0, 1);
   for (const mat of d.materials)
     if (mat.userData.healthy)
-      mat.color.copy(mat.userData.healthy).lerp(yellow, stress * 0.72);
+      mat.color.copy(mat.userData.healthy).lerp(yellow, stress * 0.72).lerp(deadBrown, d.visualDead);
   const unfold = (threshold) => {
     const p = THREE.MathUtils.clamp((d.visualGrowth - threshold) / 16, 0, 1);
     return Math.max(0.001, p * p * (3 - 2 * p));
@@ -373,8 +382,8 @@ export function animatePlant(root, plant, dt, { instant = false } = {}) {
   for (const l of d.leaves) {
     if (l.quaternion) {
       l.pivot.quaternion.copy(l.quaternion);
-      l.pivot.rotateZ(-stress * 0.4);
-    } else l.pivot.rotation.z = l.angle - stress * 0.55;
+      l.pivot.rotateZ(-stress * 0.4 - d.visualDead * 0.55);
+    } else l.pivot.rotation.z = l.angle - stress * 0.55 - d.visualDead * 0.55;
     l.pivot.scale.setScalar(unfold(l.unfurlAt));
   }
   d.updateBatches();

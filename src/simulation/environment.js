@@ -4,6 +4,9 @@ export const SOIL_Y = 0.64;
 export const WATER_RADIUS = 0.82;
 export const WATER_AMOUNT = 24;
 export const AMBIENT_LIGHT = 20;
+export const DRY_SOIL_THRESHOLD = 20;
+export const soilDryness = (moisture) =>
+  Math.max(0, Math.min(1, (DRY_SOIL_THRESHOLD - moisture) / DRY_SOIL_THRESHOLD));
 export const CAMERA = {
   position: [2.2, 3.5, 6.1],
   target: [0, 1.2, 0],

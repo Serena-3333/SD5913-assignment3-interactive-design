@@ -171,7 +171,7 @@ try {
         (
           await page
             .locator(`[data-condition="${first}"] .daily-change`)
-            .getAttribute("title")
+            .getAttribute("data-tooltip")
         ).includes(expected.plants[0].lastChange.reason),
       );
       assert.ok(
@@ -456,7 +456,7 @@ try {
           (
             await page
               .locator(`[data-condition="${p.id}"] .daily-change`)
-              .getAttribute("title")
+              .getAttribute("data-tooltip")
           ).includes(p.lastChange.reason),
         );
         assert.ok(
