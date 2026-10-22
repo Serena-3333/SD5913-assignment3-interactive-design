@@ -135,3 +135,23 @@ Author review requested removing the Health hover hint, simplifying the low-heal
 ## Publication approved · 2026-10-22
 
 The author approved publishing the accumulated local soil/lifecycle and UI refinements. All 36 Node checks and the production build passed before submission. The prior local-only entries document the review stage; the published revision and deployment result are tracked in Git and GitHub Actions.
+
+
+## Author-selected AD background · 2026-10-22 · local only
+
+After comparing generated concepts A–D and five follow-up variants, the author chose AD: cream watercolor paper, pale honey wood and sage gingham. Generated a separate clean background with all UI/models removed, retained its native dimensions and encoded a 77,540-byte WebP. Implemented responsive decorative wall/table layers with Vite-managed asset paths. Replaced the previous pale floor ellipse with a world-space cloth mesh and one static procedural gingham texture, preserving orbit, the original models, lighting and ecological data. No continuous background animation was added. Source, final prompt and implementation decisions are in docs/design/ad-background.md. This is an author design choice, not a participant test, and remains local pending approval to publish.
+
+Validation: production build passed; the repository-subpath preview loaded the background, fonts and favicon without errors and passed its planting/day workflow. Existing tool/aim/orbit workflows passed. Inspected expanded/collapsed/rotated desktop and narrow-screen captures, and confirmed camera rotation leaves simulation data unchanged. No new participant testing or universal frame-rate claim is implied.
+
+
+## Consistent tabletop perspective · 2026-10-22 · local only
+
+The author correctly identified inconsistent motion: the mat was world-space but the wood was painted into a fixed CSS backdrop. Removed the CSS wood layer and added a thin actual 3D tabletop using the existing wood artwork as its texture. Tabletop, cloth, tools and jar now share one camera. Restricted the shadow receiver to the desk surface and added texture cleanup. This corrects the mixed spatial representation without changing plant coordinates, light simulation, or controls. Verified camera rotation changes the view while preserving table/mat/ecology data, and inspected front/rotated captures. Remains local without commit or publication.
+
+
+## Botanical journal background replaces desk experiments · 2026-10-22 · local only
+
+The author rejected the AD tabletop results and selected the earlier botanical-journal (B) concept instead. Removed the experimental 3D table/cloth and their unused assets; restored the original scene floor and shadow setup. Generated a clean background containing only ivory grid paper, marginal pressed-botanical illustrations and small decorative tape marks. No UI, text or 3D objects are baked into that asset. Earlier AD entries describe abandoned local explorations, not the final implementation. Existing simulation, UI controls and right-button orbit remain intact. No commit or publication was requested.
+
+
+Publication approved on 2026-10-22: the author approved the final botanical-journal background for GitHub. The abandoned AD desk/cloth experiments are excluded from the release. All 36 Node checks and the production build passed before publishing.

@@ -1,0 +1,21 @@
+/* Decorative botanical paper only; all UI and terrarium objects remain live. */
+body {
+  isolation: isolate;
+  background: #faf3dd;
+}
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image: url("../assets/backgrounds/botanical-journal.webp");
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center;
+}
+@media (max-width: 680px) {
+  body::before {
+    background-position: 12% center;
+  }
+}
