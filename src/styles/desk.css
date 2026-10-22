@@ -1018,3 +1018,312 @@ body {
     max-height: 43dvh;
   }
 }
+
+/* First-plant guidance and readable, explicitly timed botanical feedback. */
+.collection .section-note {
+  display: block;
+  color: #596d46;
+  font-size: 12px;
+  line-height: 1.45;
+  margin-bottom: 14px;
+}
+.plant-card:not(:disabled) {
+  cursor: grab;
+}
+.plant-card:not(:disabled):active {
+  cursor: grabbing;
+}
+.plant-card:focus-visible {
+  outline: 3px solid #5c8050;
+  outline-offset: 4px;
+}
+.plant-card:hover:not(:disabled) {
+  transform: translateY(-7px) rotate(-2deg);
+  box-shadow: 2px 8px 0 #c5d591;
+}
+.terrarium-column[data-empty="true"] .scene-heading h2 {
+  font-size: clamp(23px, 2.5vw, 33px);
+  line-height: 1.15;
+}
+.planting-guide {
+  position: absolute;
+  top: 18px;
+  left: 50%;
+  transform: translateX(-50%) rotate(-1deg);
+  width: min(88%, 365px);
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 13px 16px;
+  background: #f8edbd;
+  box-shadow: 2px 4px 0 #c5b97840;
+  color: #51683f;
+  font-size: 14px;
+  line-height: 1.4;
+  pointer-events: none;
+  z-index: 2;
+}
+.planting-guide::before {
+  content: "";
+  position: absolute;
+  width: 55px;
+  height: 13px;
+  background: #bed191b8;
+  top: -7px;
+  left: calc(50% - 27px);
+  transform: rotate(5deg);
+}
+.planting-guide small {
+  display: block;
+  font-size: 12px;
+  margin-top: 3px;
+}
+.guide-arrow {
+  font-size: 32px;
+  animation: planting-cue 650ms ease-in-out 2 alternate;
+}
+@keyframes planting-cue {
+  from {
+    transform: translate(-3px, -3px);
+  }
+  to {
+    transform: translate(4px, 4px);
+  }
+}
+.soil-overview,
+.metrics-guide {
+  flex-shrink: 0;
+  color: #67764f;
+}
+.soil-overview {
+  margin-top: 13px;
+  font-size: 12px;
+}
+.metrics-guide {
+  font-size: 12px;
+  margin: 9px 0 10px;
+}
+.soil-overview summary,
+.metrics-guide summary {
+  cursor: pointer;
+  padding: 4px 0;
+  line-height: 1.35;
+}
+.soil-overview summary:hover,
+.metrics-guide summary:hover {
+  color: #3d583c;
+}
+.soil-overview .moisture-section {
+  margin: 5px 0 8px;
+}
+.soil-overview .moisture-meter {
+  height: 7px;
+  margin: 3px 0 8px;
+}
+.soil-overview p,
+.metrics-guide p {
+  font-size: 12px;
+  line-height: 1.5;
+}
+.metrics-guide[open] {
+  border-bottom: 1px dashed #c7cd9f;
+  padding-bottom: 8px;
+}
+.environment #plant-conditions {
+  padding-right: 4px;
+}
+.environment .condition-card,
+.environment[data-density="compact"] .condition-card {
+  padding: 10px 0;
+}
+.environment .condition-top {
+  align-items: flex-start;
+  padding-right: 0;
+  gap: 7px;
+}
+.environment .condition-top h4 {
+  font-size: 18px;
+  line-height: 1.3;
+}
+.environment .comfort-value {
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1px;
+  flex-shrink: 0;
+}
+.environment .comfort-value > span,
+.environment[data-density="compact"] .comfort-value > span {
+  display: block;
+  color: #5b704c;
+  font-size: 11px;
+  line-height: 1.2;
+}
+.environment .comfort-value strong,
+.environment[data-density="compact"] .comfort-value strong {
+  font-size: 24px;
+  line-height: 1;
+}
+.environment .condition-middle {
+  display: none;
+}
+.live-advice {
+  margin-top: 8px;
+}
+.live-advice p {
+  font-size: 12px;
+  line-height: 1.4;
+  color: #566a43;
+  margin: 0;
+}
+.live-advice p + p {
+  margin-top: 5px;
+}
+.live-advice strong {
+  font-weight: 600;
+  display: block;
+}
+.live-advice span {
+  display: block;
+}
+.environment .local-values,
+.environment[data-density="compact"] .local-values {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 8px;
+  row-gap: 5px;
+  font-size: 11px;
+  margin-top: 9px;
+  color: #536b43;
+}
+.local-values > span {
+  gap: 3px;
+  flex-wrap: wrap;
+}
+.environment .local-values .icon {
+  width: 12px;
+  height: 12px;
+}
+.environment .local-values small {
+  font-size: 10px;
+}
+.environment .health-value {
+  color: #756647;
+  font-size: 11px;
+}
+.environment .growth-value {
+  color: #536b43;
+}
+.environment .daily-change,
+.environment[data-density="compact"] .daily-change {
+  color: #6d6a51;
+  border-left: 2px solid #d1c795;
+  padding-left: 6px;
+  font-size: 11px;
+  line-height: 1.4;
+  margin-top: 9px;
+}
+.environment .conditions-empty {
+  color: #5f744b;
+}
+.environment .conditions-empty p {
+  display: block;
+  font-size: 13px;
+  line-height: 1.5;
+}
+@media (prefers-reduced-motion: reduce) {
+  .guide-arrow {
+    animation: none;
+  }
+}
+@media (max-width: 680px) {
+  .planting-guide {
+    top: 7px;
+    font-size: 12px;
+    padding: 9px 11px;
+    gap: 8px;
+  }
+  .planting-guide small {
+    font-size: 11px;
+  }
+  .guide-arrow {
+    font-size: 25px;
+  }
+  .environment .panel-title h2 {
+    font-size: 20px;
+  }
+  .environment .condition-top h4 {
+    font-size: 16px;
+  }
+  .environment .comfort-value strong,
+  .environment[data-density="compact"] .comfort-value strong {
+    font-size: 21px;
+  }
+  .environment .comfort-value > span,
+  .environment[data-density="compact"] .comfort-value > span {
+    font-size: 10px;
+  }
+  .environment .local-values,
+  .environment[data-density="compact"] .local-values {
+    grid-template-columns: 1fr;
+  }
+  .environment .conditions-empty p {
+    display: block;
+    font-size: 12px;
+  }
+  .environment .conditions-empty strong {
+    font-size: 17px;
+  }
+  .soil-overview {
+    margin-top: 7px;
+  }
+  .metrics-guide {
+    margin-bottom: 5px;
+  }
+}
+
+/* Keep diagnoses short enough to compare the whole miniature garden. */
+.environment .condition-card,
+.environment[data-density="compact"] .condition-card {
+  padding: 8px 0;
+}
+.environment .comfort-value {
+  flex-direction: row;
+  align-items: baseline;
+  gap: 5px;
+}
+.environment .comfort-value strong,
+.environment[data-density="compact"] .comfort-value strong {
+  font-size: 22px;
+}
+.live-advice {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px 10px;
+  margin-top: 5px;
+}
+.live-advice p,
+.live-advice strong {
+  display: inline;
+}
+.live-advice p + p {
+  margin-top: 0;
+}
+.environment .local-values,
+.environment[data-density="compact"] .local-values {
+  margin-top: 6px;
+  grid-template-columns: 1fr 1fr;
+}
+.environment .daily-change,
+.environment[data-density="compact"] .daily-change {
+  margin-top: 5px;
+}
+@media (max-width: 680px) {
+  .environment .comfort-value {
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 1px;
+  }
+  .environment .condition-card {
+    padding: 7px 0;
+  }
+}

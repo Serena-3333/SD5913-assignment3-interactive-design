@@ -12,7 +12,7 @@ P1 establishes the warm three-column interface. P2–P4 inform faceted, volumetr
 
 - Vite, vanilla ES modules, and Three.js; no backend or UI framework.
 - Simulation is immutable JavaScript with no renderer dependency.
-- Three fixed slots constrain placement and make comparisons understandable.
+- The initial MVP used three fixed slots; the current version supports one to five independently positioned plants, including repeated species.
 - Comfort is live; health and growth change only after advancing a day.
 - Simplified transparent glass preserves plant visibility and avoids costly refraction.
 - Collection thumbnails use the very same procedural models as the main scene.
@@ -33,6 +33,8 @@ Codex assists with implementation, procedural geometry, debugging, tests, and do
 ## User testing
 
 The project author reported user testing on 2026-10-20: interaction remained sluggish, especially camera rotation, and numeric growth/health changes were much easier to notice than plant changes. Participant counts, session methods and task-completion data were not provided. These are author-reported findings, not sessions conducted by Codex. Further testing should check whether the revised rotation and plant transitions resolve those observations.
+
+The author subsequently supplied eight tester-feedback screenshots on 2026-10-21. Findings, evidence limits and changes are recorded in [docs/USER_TESTING.md](docs/USER_TESTING.md). Follow-up user testing of the revised interface remains pending.
 
 ## Changes after testing
 
@@ -94,3 +96,14 @@ The local rotation and growth refinement below responds to the reported feedback
 ## Approved release · 2026-10-21
 
 The author explicitly approved committing and publishing the local rotation/growth refinement. Re-ran all 27 Node tests and the production build successfully before release. The earlier local-only entry records the review stage; publication status is tracked by the GitHub Pages deployment workflow.
+
+## Feedback clarity refinement · 2026-10-21 · local review
+
+- Reviewed eight author-supplied conversation screenshots and merged them with the author's six review points. Recorded the actual observations separately from author interpretations in docs/USER_TESTING.md, without publishing private screenshots, contact identity or invented participant metrics. The underlying video clips were not available for inspection.
+- Implemented only approved items 1–4: explicit first-plant guidance and grab cues; empty-state instructions and a secondary jar-average overview; visible metric meanings and a dated historical health change; readable current local causes with actionable water/light advice. Deferred tool/lamp redesign, rotation cues and capacity layout.
+- Kept ecological rules unchanged. Current advice derives from the same preference ranges and weighted suitability; both water and light issues remain visible. Daily records keep their original values, date and cause as the current environment changes.
+- The first-plant cue is a finite CSS animation and respects reduced-motion preferences; no new 3D rendering work is added. Follow-up user acceptance is pending. This iteration is not committed or published without further approval.
+
+## Compact feedback after author review · 2026-10-21 · local only
+
+The author reviewed the actual UI captures and requested shorter plant notes and removal of average-water UI. Removed repeated action explanations and exact local water/light readouts; retained short current causes, comfort, health, growth and a compact dated historical health delta. Moved the historical cause to the tooltip. Removed Jar overview; initial 60% moisture is explained only during empty-state onboarding. Recorded this author-review iteration in docs/USER_TESTING.md. Simulation and rendering are unchanged. No commit or publication was authorized.

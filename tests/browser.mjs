@@ -53,14 +53,6 @@ async function assertUI(s) {
       c.percent,
     );
     assert.equal(
-      Number(await row.locator(".water-value b").innerText()),
-      Math.round(c.moisture),
-    );
-    assert.equal(
-      Number(await row.locator(".light-value b").innerText()),
-      Math.round(c.light),
-    );
-    assert.equal(
       Number(await row.locator(".health-value strong").innerText()),
       p.health,
     );
@@ -175,7 +167,13 @@ try {
       const note = await page
         .locator(`[data-condition="${first}"] .daily-change`)
         .innerText();
-      assert.ok(note.includes(expected.plants[0].lastChange.reason));
+      assert.ok(
+        (
+          await page
+            .locator(`[data-condition="${first}"] .daily-change`)
+            .getAttribute("title")
+        ).includes(expected.plants[0].lastChange.reason),
+      );
       assert.ok(
         note.includes(String(Math.abs(expected.plants[0].lastChange.health))),
       );
@@ -446,7 +444,13 @@ try {
         const note = await page
           .locator(`[data-condition="${p.id}"] .daily-change`)
           .innerText();
-        assert.ok(note.includes(p.lastChange.reason));
+        assert.ok(
+          (
+            await page
+              .locator(`[data-condition="${p.id}"] .daily-change`)
+              .getAttribute("title")
+          ).includes(p.lastChange.reason),
+        );
         assert.ok(
           note.includes(
             p.lastChange.health > 0

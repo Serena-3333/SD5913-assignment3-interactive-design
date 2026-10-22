@@ -28,6 +28,7 @@ Open the address printed by Vite.
 - Select **Light** to adjust lamp orbit, reach, beam size and power. Drag the lamp head to position it or the light spot to aim. Reach moves the light patch along the arm. Light and comfort update immediately; health waits for the next day.
 - Click **Next Day** after planting at least one individual. An empty jar explains why the button is disabled. Each plant reports its actual health change and a short cause, such as “Health −8 · soil too dry”. The scene title also responds to the garden's state.
 - Plants begin as small seedlings and become roughly twice as large at maturity, with new foliage unfolding in stages. Next Day eases into the new size and posture with a brief growth cue; poor health reduces vigor and yellows/droops foliage. Reduced-motion preferences skip the transition.
+- The empty jar explicitly guides the first planting. Each plant labels **Comfort now**, **Health** and **Growth**. Short current causes guide experimentation; **Last day · Day XX** identifies a recorded outcome, not a prediction. The initial guide explains starting soil moisture; no running average or local water/light numbers are shown.
 - Cards describe preferences in words, encouraging observation rather than matching ideal-range numbers. The experiment's internal suitability rules remain deterministic.
 - Click a card, focus the scene and use arrow keys/Enter to plant at a free coordinate. Escape or pointer cancellation abandons an unfinished gesture without changing the garden.
 - The plant drawer waits before sliding closed at five plants. Close it earlier with × and reopen the **Plants** tab anytime. On phones, choosing a card closes the overlay so the soil stays accessible.
@@ -63,7 +64,7 @@ The GitHub Actions workflow in [.github/workflows/deploy.yml](.github/workflows/
 - `src/interactions/plantDrag.js`: soil raycasting, free placement/movement, tool gestures, right-button orbit separation and keyboard controls.
 - `src/ui/`, `src/styles/`: responsive paper notes, qualitative preferences and per-plant change explanations.
 - `tests/`: simulation, real-browser interactions, layout, rendering budget and production-path checks.
-- `PROCESS.md`: actual design decisions, iteration and AI-tool use; no invented student usability results.
+- `PROCESS.md`: actual design decisions, iteration and AI-tool use. [User-testing notes](docs/USER_TESTING.md) distinguish supplied tester observations from developer validation and pending follow-up.
 
 ## Credits
 

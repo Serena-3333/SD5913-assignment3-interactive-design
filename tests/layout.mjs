@@ -3,7 +3,10 @@ import { chromium } from "playwright";
 import { mkdir, writeFile } from "node:fs/promises";
 import { DEV_URL, put, openCollection } from "./browserHelpers.mjs";
 import { POINTS } from "./fixtures.mjs";
-const browser = await chromium.launch({ headless: true });
+const browser = await chromium.launch({
+  headless: true,
+  args: process.env.TERRARIUM_GPU === "metal" ? ["--use-angle=metal"] : [],
+});
 const errors = [];
 const results = [];
 try {
