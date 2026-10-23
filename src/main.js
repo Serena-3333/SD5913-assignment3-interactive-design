@@ -1,6 +1,7 @@
 import "./styles/main.css";
 import "./styles/desk.css";
 import "./styles/background.css";
+import "./styles/uiRefinements.css";
 import { createUI } from "./ui/uiController.js";
 import { createScene } from "./scene/createScene.js";
 import { createInteractions } from "./interactions/plantDrag.js";

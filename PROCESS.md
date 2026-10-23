@@ -155,3 +155,27 @@ The author rejected the AD tabletop results and selected the earlier botanical-j
 
 
 Publication approved on 2026-10-22: the author approved the final botanical-journal background for GitHub. The abandoned AD desk/cloth experiments are excluded from the release. All 36 Node checks and the production build passed before publishing.
+
+## Notebook hierarchy and individual correspondence · 2026-10-23 · local only
+
+Implemented the author's saved review requests after explicit authorization to continue. Researched Carbon typography and Filofax Botanical note organization, then adapted them to the existing Fredoka/DM Sans, cream/sage palette and botanical backdrop. Reduced the scene heading below the product title, moved the heading/capacity/camera group upward, and made both sidebars matching bound notebooks with separate compact slips. References and exact role choices are recorded in docs/design/notebook-ui.md; no external reference artwork was copied.
+
+Added ID-based bidirectional hover between actual raycastable plants and their status slips, including repeated species. Keyboard focus also locates the individual. Outlines share geometry, support batched leaves, synchronize during plant animation, clear during gestures/removal, and release their own instance buffers/materials. No ecological formulas, persistent animation loop or screen-wide rendering effect was added. The author review and follow-up questions are recorded in docs/USER_TESTING.md; no new participant test results are claimed. This iteration remains local pending separate approval to commit/publish.
+
+Validation: all 40 Node checks passed, as did four focused notebook/hover workflow groups, four existing tool/camera workflow groups and seven fitted viewports from 1440×900 to 390×844. The viewport review caught and corrected a legacy wrapping/flex rule that stretched narrow-screen slips. Inspected actual notebook and linked-plant captures, verified that idle rendering parks, and built production successfully. Vite retains its existing advisory about the three.js vendor bundle exceeding 500kB. No JS/WebGL errors were recorded by the focused browser checks.
+
+### Further author reference review · 2026-10-23 · local only
+
+Removed “YOUR LITTLE WORLD” and “Little by little” at the author's request. Adapted the two newly supplied scrapbook photographs into wider sage covers, inset cream grid pages, six prominent oval binding rings with punched holes and stacked page edges. Kept the existing palette, individual slips and hover correspondence. The photographs and their stickers are references only, not bundled assets. Camera instructions can wrap alongside Reset view without becoming a narrow vertical text strip. This is author review, not another participant session; no publication was authorized.
+
+### Return to original paper notes · 2026-10-23 · local only
+
+The author rejected both notebook treatments and requested the original taped paper-note appearance. Removed notebook covers, rings, inset pages and the newer card treatment, allowing the original panel/card styling to apply again. Retained the smaller raised scene heading, camera-control wrapping, removed decorative labels, visible individual IDs and bidirectional hover/focus linking. Renamed the remaining typography/link stylesheet to uiRefinements.css and the focused interaction check to tests/plantLink.mjs. Earlier notebook entries document abandoned design explorations. No commit or publication was authorized.
+
+## Wider status note and complete scene framing · 2026-10-23 · local only
+
+The author found the status values cramped and the lamp/base cut off at some view angles. Widened the desktop status column to a responsive 306–350px, added inset spacing to each status row and allowed names/comfort to wrap cleanly. The original taped-paper style remains.
+
+Added an orientation-aware minimum camera distance based on cached bounds of the actual jar, fixed lamp, resting can and base. The composition keeps a 6% screen-edge margin at the closest permitted zoom, including high/front/back/side views. Bounds are cached once, fitting uses reusable vectors, and rendering still parks at idle. The receiver plane now extends beyond the visible composition to avoid showing its rectangular edge. No pixel-ratio reduction or ecological changes were introduced. Focused view-boundary checks, plant linking, existing tools and seven viewport layouts passed; developer validation is distinct from follow-up user acceptance. No commit or publication was authorized.
+
+Publication approved on 2026-10-23: the author accepted the local changes and explicitly requested upload to GitHub. The release retains the original taped notes, updated hierarchy and compact spacing, bidirectional plant/status linking, wider status column and complete camera framing. The two rejected notebook appearances remain excluded. All 40 Node checks and the production build passed again before release; deployment status is verified separately after pushing.

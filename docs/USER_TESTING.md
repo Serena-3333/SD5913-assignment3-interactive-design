@@ -54,3 +54,15 @@ The author reviewed the local interface and requested removal of the central pla
 Removed those visual elements. Hovering the lamp now explains direct light-spot dragging; clicking the fixed lamp opens only Range/Intensity in an overlay, without changing the soil's screen position. A small aim point remains available in light-edit mode, with keyboard focus access retained. The watering can lifts by 0.09 illustrative model units and gains a warm outline on hover; the lamp gains the outline without lifting. Moving away removes the effects and returns the can to rest. The effects use shared-geometry shells during hover rather than changing object colors or adding a full-screen effect/continuous animation. Tool access for keyboard users is revealed on focus instead of occupying the bottom dock. Direct watering returns to neutral selection after the pour gesture.
 
 The focused tool workflow and production build passed; hover captures were inspected. No new user-acceptance results are claimed. This remains local and uncommitted.
+
+## Notebook hierarchy and matching individual plants · author review, 2026-10-23
+
+The author saved a screenshot review on 2026-10-22 and authorized implementation on 2026-10-23. They found the central state heading too similar in size to the product title, wanted the capacity/camera group higher, and could not easily match planted individuals to their right-side data. They requested matching notebooks on both sides and an independent status slip for each plant. These are author observations, not additional P01 findings.
+
+Implemented a smaller scene heading and explicit type roles, raised the central information group, and unified the notebook covers/bindings/slips. Hovering a plant highlights and reveals its status slip; hovering or keyboard-focusing the slip outlines that individual plant. Matching uses unique IDs, including repeated species, without changing environmental data. The compact wording and lack of exact local water/light readouts remain intact.
+
+Developer checks exercise both directions, all four species with repeated Moss, focus/leave/cancellation, removal cleanup and viewport fitting. These checks do not establish that users can identify plants faster. In the next participant session, ask a tester to locate one of two same-species plants from its note and vice versa without verbal help; check readability on their actual display. No completion-time, preference or satisfaction outcome has yet been collected for this change.
+
+### Author visual decision · 2026-10-23
+
+The author rejected both notebook visual treatments and asked to restore the original taped paper-note panels and cards. Restored those original visuals, keeping the individual hover/focus correspondence, revised scene-title hierarchy and removal of “YOUR LITTLE WORLD”/“Little by little”. This is a visual preference from the author, not a new participant test. Follow-up participant identification/readability checks remain pending.

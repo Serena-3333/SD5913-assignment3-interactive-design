@@ -1,0 +1,117 @@
+/* Product title > scene title > section title > labels > supporting text.
+   Role-based hierarchy, adapted to Fredoka/DM Sans and the fitted paper desk. */
+:root {
+  --type-brand: 32px;
+  --type-scene: 24px;
+  --type-section: 22px;
+  --type-label: 14px;
+  --type-body: 12px;
+  --leading-ui: 1.45;
+}
+.masthead {
+  padding-top: 16px;
+  padding-bottom: 12px;
+}
+.brand h1 {
+  font-size: var(--type-brand);
+  line-height: 1.2;
+  letter-spacing: -0.45px;
+}
+.brand p {
+  margin-top: 4px;
+  line-height: var(--leading-ui);
+}
+.workspace {
+  margin-top: 4px;
+  padding-top: 6px;
+}
+.terrarium-column .scene-heading {
+  margin-top: -4px;
+  padding: 0 8px 4px;
+}
+.terrarium-column .scene-heading h2,
+.terrarium-column[data-empty="true"] .scene-heading h2 {
+  font-size: var(--type-scene);
+  line-height: 1.25;
+  letter-spacing: -0.2px;
+}
+.capacity-note {
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.4;
+  padding: 2px 8px;
+  margin-top: 6px;
+  background: #edf0d4b3;
+  border: 1px solid #d4ddae;
+}
+.view-controls {
+  padding: 4px 8px;
+  font-size: 12px;
+  line-height: 1.5;
+  margin-bottom: 2px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.view-controls .view-instruction {
+  flex: 1 1 190px;
+  min-width: 0;
+}
+.view-reset {
+  font-size: 12px;
+  line-height: 1.4;
+  padding: 5px 8px;
+  flex-shrink: 0;
+}
+
+/* Preserve the original taped paper panels; link only the active individual. */
+.environment .condition-card.is-linked {
+  background: #fff6cc;
+  box-shadow: inset 3px 0 0 #819a51;
+  border-radius: 3px;
+}
+.environment .condition-card.is-linked h4 {
+  color: #3c582d;
+}
+.condition-card:focus-visible {
+  outline: 2px solid #6c8750;
+  outline-offset: 2px;
+}
+/* Give names and live comfort separate breathing room, including on hover. */
+.environment .condition-card,
+.environment[data-density="compact"] .condition-card {
+  padding: 10px 8px;
+}
+.environment .condition-top {
+  gap: 14px;
+  flex-wrap: wrap;
+  align-items: baseline;
+}
+.environment .condition-top h4 {
+  flex: 1 0 auto;
+}
+.environment .comfort-value {
+  gap: 7px;
+  margin-left: auto;
+}
+.environment .local-values {
+  column-gap: 18px;
+}
+@media (min-width: 681px) {
+  .workspace { --status-width: clamp(306px, 24vw, 350px); }
+  .workspace,
+  .workspace.collection-collapsed {
+    grid-template-columns: var(--collection-size) minmax(0, 1fr) var(--status-width);
+  }
+  .workspace.collection-collapsed {
+    grid-template-columns: 0 minmax(0, 1fr) var(--status-width);
+  }
+}
+@media (max-width: 680px) {
+  :root {
+    --type-brand: 24px;
+    --type-scene: 20px;
+  }
+  .masthead { padding-top: 12px; padding-bottom: 6px; }
+  .workspace { margin-top: 2px; padding-top: 4px; }
+  .view-controls { padding-inline: 4px; font-size: 11px; }
+}

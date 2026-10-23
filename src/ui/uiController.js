@@ -18,7 +18,7 @@ export function createUI(root) {
    .join(
      "",
    )}</div><div class="collection-bottom"><span class="doodle-flower">${flower}</span><span>One plant is enough.<br>Up to five, repeats welcome.</span><span class="little-sprout">${icon("leaf")}</span></div></aside><button id="collection-open" class="collection-open" type="button" aria-label="Open plants and preferences" aria-controls="plant-collection" aria-expanded="true" hidden>${icon("leaf")}Plants</button></div>
- <section class="terrarium-column" aria-labelledby="terrarium-title"><div class="scene-heading"><div><span class="small-kicker">YOUR LITTLE WORLD</span><h2 id="terrarium-title">Room to grow<span>!</span></h2><p id="plant-count" class="capacity-note" aria-label="Plant capacity">0 planted · max 5</p></div></div><div class="view-controls"><span class="view-instruction">${icon("rotate")}<span class="desktop-orbit">Hold right mouse + drag to rotate</span><span class="touch-orbit">Two fingers to rotate</span></span><button id="camera-reset" type="button" class="view-reset" aria-label="Reset view">${icon("reset")}Reset view</button></div>
+ <section class="terrarium-column" aria-labelledby="terrarium-title"><div class="scene-heading"><div><h2 id="terrarium-title">Room to grow<span>!</span></h2><p id="plant-count" class="capacity-note" aria-label="Plant capacity">0 planted · max 5</p></div></div><div class="view-controls"><span class="view-instruction">${icon("rotate")}<span class="desktop-orbit">Hold right mouse + drag to rotate</span><span class="touch-orbit">Two fingers to rotate</span></span><button id="camera-reset" type="button" class="view-reset" aria-label="Reset view">${icon("reset")}Reset view</button></div>
  <div id="scene-container" class="scene-container"><span class="scene-spark spark-one" aria-hidden="true">✧</span><span class="scene-spark spark-two" aria-hidden="true">✳</span><div id="placement-preview" class="placement-preview" role="status" hidden></div><button id="light-handle" class="light-handle" type="button" aria-label="Drag light spot; click then use arrow keys to aim"></button><div id="tool-hover" class="tool-hover" role="tooltip" hidden></div><div class="keyboard-tools"><button id="water-button" type="button">Select watering can</button><button id="lamp-button" type="button">Select light</button></div> <div id="lamp-controls" class="lamp-controls" hidden>${[
    ["radius", "Range", 0.3, 1.15, 0.01],
    ["power", "Intensity", 0, 100, 1],
@@ -33,7 +33,7 @@ export function createUI(root) {
 <div id="scene-loading" class="scene-loading">Making a little room for nature…</div></div>
  <p id="placement-help" class="placement-help" role="status" hidden>Plant selected</p>
 </section>
- <aside class="environment-column"><section class="environment paper-panel" aria-labelledby="environment-title"><div class="panel-title"><span class="title-sun">${icon("sun")}</span><h2 id="environment-title">Feeling good?</h2></div><details id="metrics-guide" class="metrics-guide" hidden><summary>What do the numbers mean?</summary><p><strong>Comfort now</strong> responds to water and light here. <strong>Health</strong> is the plant’s current condition. <strong>Growth</strong> is its accumulated development. Health and growth update after Next Day; “Last day” records what already happened, not a forecast.</p></details><div id="plant-conditions"></div></section> <div class="day-controls"><div class="day-counter"><span>Little by little</span><strong id="day-number">Day 01</strong></div><button id="next-day" type="button" class="primary-button" aria-describedby="next-day-hint" disabled><span>Next Day</span>${icon("arrow")}</button><div class="reset-actions"><button id="reset-button" type="button" class="icon-button" aria-label="Reset experiment" data-tooltip="Reset experiment">${icon("reset")}</button><button id="clear-button" type="button" class="icon-button" aria-label="Clear jar" data-tooltip="Clear jar">${icon("trash")}</button></div><p id="next-day-hint" class="next-day-hint">Plant at least one to begin.</p></div></aside>
+ <aside class="environment-column"><section class="environment paper-panel" aria-labelledby="environment-title"><div class="panel-title"><span class="title-sun">${icon("sun")}</span><h2 id="environment-title">Feeling good?</h2></div><details id="metrics-guide" class="metrics-guide" hidden><summary>What do the numbers mean?</summary><p><strong>Comfort now</strong> responds to water and light here. <strong>Health</strong> is the plant’s current condition. <strong>Growth</strong> is its accumulated development. Health and growth update after Next Day; “Last day” records what already happened, not a forecast.</p></details><div id="plant-conditions"></div></section> <div class="day-controls"><div class="day-counter"><strong id="day-number">Day 01</strong></div><button id="next-day" type="button" class="primary-button" aria-describedby="next-day-hint" disabled><span>Next Day</span>${icon("arrow")}</button><div class="reset-actions"><button id="reset-button" type="button" class="icon-button" aria-label="Reset experiment" data-tooltip="Reset experiment">${icon("reset")}</button><button id="clear-button" type="button" class="icon-button" aria-label="Clear jar" data-tooltip="Clear jar">${icon("trash")}</button></div><p id="next-day-hint" class="next-day-hint">Plant at least one to begin.</p></div></aside>
  </main><div id="toast" class="toast" role="status" aria-live="polite" hidden></div><div id="drag-cursor" class="drag-cursor" hidden><img alt=""/><span></span></div><dialog id="confirm-dialog"><form method="dialog"><span class="dialog-flower">${flower}</span><h2 id="confirm-title"></h2><p id="confirm-description"></p><div class="dialog-actions"><button type="submit" class="secondary-button" value="cancel">Keep growing</button><button id="confirm-action" type="submit" class="primary-button" value="confirm">Reset</button></div></form></dialog>`;
   const $ = (selector) => root.querySelector(selector);
   const hintController = new AbortController();
@@ -68,6 +68,7 @@ export function createUI(root) {
     if (event.key === "Escape") hideHint();
   }, { signal: hintController.signal });
   root.addEventListener("scroll", hideHint, { capture: true, signal: hintController.signal });
+  let linkedPlant = null;
   let selected = null,
     tool = null,
     toastTimer,
@@ -173,6 +174,7 @@ export function createUI(root) {
           ? `${Math.round(((state.lamp.radius - 0.3) / 0.85) * 100)}%`
           : `${Math.round(state.lamp.power)}%`;
     }
+    if (!state.plants.some((p) => p.id === linkedPlant)) linkedPlant = null;
     const conditions = $("#plant-conditions");
     for (const e of [...conditions.querySelectorAll(".condition-card")])
       if (!state.plants.some((p) => p.id === e.dataset.condition)) e.remove();
@@ -185,10 +187,14 @@ export function createUI(root) {
       if (!card) {
         card = document.createElement("article");
         card.className = "condition-card";
+        card.tabIndex = 0;
+        card.setAttribute("aria-label", `${SPECIES[plant.species].name} ${plant.id.split("-")[1]} status; focus to locate this plant`);
         card.dataset.condition = plant.id;
-        card.innerHTML = `<div class="condition-top"><h4>${SPECIES[plant.species].name} <small>${plant.id.split("-")[1]}</small><button type="button" class="plant-remove" data-remove="${plant.id}" aria-label="Remove ${SPECIES[plant.species].name} ${plant.id.split("-")[1]}" data-tooltip="Remove plant">×</button></h4><div class="comfort-value"><span>Comfort now</span><strong><b>0</b>%</strong><em class="death-label" hidden>Dead</em></div></div><div class="meter" role="meter" aria-label="Current comfort of ${SPECIES[plant.species].name} ${plant.id.split("-")[1]}" aria-valuemin="0" aria-valuemax="100"><div></div></div><div class="condition-middle"><span class="status-badge"></span></div><div class="live-advice"></div><div class="local-values"><span class="health-value">${icon("heart")}<span>Health</span><strong>70</strong></span><span class="growth-value" data-tooltip="Accumulated growth; updates after Next Day">${icon("leaf")}<span>Growth</span><b></b><small>%</small></span></div><p class="daily-change" hidden></p>`;
+        card.dataset.plantSpecies = plant.species;
+        card.innerHTML = `<div class="condition-top"><h4>${SPECIES[plant.species].name} <small>#${plant.id.split("-")[1]}</small><button type="button" class="plant-remove" data-remove="${plant.id}" aria-label="Remove ${SPECIES[plant.species].name} ${plant.id.split("-")[1]}" data-tooltip="Remove plant">×</button></h4><div class="comfort-value"><span>Comfort now</span><strong><b>0</b>%</strong><em class="death-label" hidden>Dead</em></div></div><div class="meter" role="meter" aria-label="Current comfort of ${SPECIES[plant.species].name} ${plant.id.split("-")[1]}" aria-valuemin="0" aria-valuemax="100"><div></div></div><div class="condition-middle"><span class="status-badge"></span></div><div class="live-advice"></div><div class="local-values"><span class="health-value">${icon("heart")}<span>Health</span><strong>70</strong></span><span class="growth-value" data-tooltip="Accumulated growth; updates after Next Day">${icon("leaf")}<span>Growth</span><b></b><small>%</small></span></div><p class="daily-change" hidden></p>`;
         conditions.append(card);
       }
+      card.classList.toggle("is-linked", linkedPlant === plant.id);
       card.dataset.status =
         plant.dead ? "dead" : c.comfort >= 0.8
           ? "comfortable"
@@ -259,6 +265,21 @@ export function createUI(root) {
   return {
     $,
     render,
+    highlightPlant(id, reveal = false) {
+      if (linkedPlant === id) return;
+      linkedPlant = id;
+      const list = $("#plant-conditions");
+      for (const row of list.querySelectorAll("[data-condition]")) {
+        const match = row.dataset.condition === id;
+        row.classList.toggle("is-linked", match);
+        if (match && reveal) {
+          const r = row.getBoundingClientRect(), bounds = list.getBoundingClientRect();
+          const delta = r.top < bounds.top ? r.top - bounds.top - 4
+            : r.bottom > bounds.bottom ? r.bottom - bounds.bottom + 4 : 0;
+          if (delta) list.scrollBy({ top: delta, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" });
+        }
+      }
+    },
     thumbnails(images) {
       for (const [id, url] of Object.entries(images))
         $(`[data-species="${id}"] img`).src = url;

@@ -28,6 +28,7 @@ export function createInteractions(
     hoverEvent = null;
   const lightHandle = ui.$("#light-handle");
   const cursor = ui.$("#drag-cursor");
+  const conditionsList = ui.$("#plant-conditions");
   canvas.tabIndex = 0;
   canvas.setAttribute(
     "aria-label",
@@ -105,6 +106,12 @@ export function createInteractions(
     hoverFrame = 0;
     world.setHover(null);
     ui.hover(null);
+    linkPlant(null);
+  }
+  function linkPlant(id, reveal = false) {
+    if (drag || selected || isBusy()) id = null;
+    world.setPlantHover(id);
+    ui.highlightPlant(id, reveal);
   }
   function toolAnchor(kind) {
     const anchor = new THREE.Vector3();
@@ -127,19 +134,29 @@ export function createInteractions(
       return;
     }
     if (lightHandle.contains(e.target)) {
+      linkPlant(null);
       world.setHover("aim");
       ui.hover("Drag to move the light spot", toolAnchor("aim"));
       return;
     }
     if (e.target !== canvas) {
+      const row = e.target.closest?.("[data-condition]");
+      if (row) {
+        world.setHover(null);
+        ui.hover(null);
+        linkPlant(row.dataset.condition);
+        return;
+      }
       clearHover();
       return;
     }
     let kind = null;
+    let plantId = null;
     if (selected) canvas.style.cursor = "crosshair";
     else {
       const hit = pick(e),
         point = soilPoint(e);
+      if (hit?.kind === "plant") plantId = hit.id;
       kind =
         hit?.kind === "water" || hit?.kind === "lamp"
           ? hit.kind
@@ -161,6 +178,7 @@ export function createInteractions(
               : "default";
     }
     world.setHover(kind);
+    linkPlant(plantId, true);
     ui.hover(
       kind === "water"
         ? "Drag the can onto a soil patch"
@@ -177,6 +195,16 @@ export function createInteractions(
     if (!hoverFrame)
       hoverFrame = requestAnimationFrame(() => showHover(hoverEvent));
   }
+  for (const event of ["pointerover", "focusin"])
+    conditionsList.addEventListener(event, (e) => {
+      const row = e.target.closest("[data-condition]");
+      if (row) linkPlant(row.dataset.condition);
+    }, { signal });
+  for (const event of ["pointerout", "focusout"])
+    conditionsList.addEventListener(event, (e) => {
+      const row = e.target.closest("[data-condition]");
+      if (row && !row.contains(e.relatedTarget)) linkPlant(null);
+    }, { signal });
   canvas.addEventListener(
     "pointerleave",
     () => {

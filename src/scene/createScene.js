@@ -70,7 +70,7 @@ export function createScene(container, getState) {
   key.shadow.bias = -0.0002;
   scene.add(key);
   const ground = new THREE.Mesh(
-    new THREE.PlaneGeometry(8, 8),
+    new THREE.PlaneGeometry(32, 32),
     new THREE.ShadowMaterial({ opacity: 0.12 }),
   );
   ground.rotation.x = -Math.PI / 2;
@@ -120,6 +120,8 @@ export function createScene(container, getState) {
   const labelPoint = new THREE.Vector3();
   const waterOutline = createHoverOutline(wateringCan.group);
   const lampOutline = createHoverOutline(lamp.group);
+  const plantOutlines = new Map();
+  let hoveredPlant = null;
   let hoveredTool = null;
   function updateAimLabel() {
     const aim = getState().lamp.target;
@@ -138,6 +140,48 @@ export function createScene(container, getState) {
     aimLabel.classList.toggle("light-off", getState().lamp.power === 0);
   }
   const target = new THREE.Vector3();
+  // Cache the static composition once. Fit the actual jar, lamp, resting can
+  // and base rather than allowing the viewport to cut them off when orbiting.
+  let framePoints = null;
+  const viewOffset = new THREE.Vector3(),
+    viewPoint = new THREE.Vector3(),
+    cameraRotation = new THREE.Matrix4();
+  function fitComposition() {
+    if (!framePoints) {
+      scene.updateMatrixWorld(true);
+      framePoints = [];
+      for (const object of [terrarium.group, lamp.group, wateringCan.group]) {
+        const b = new THREE.Box3().setFromObject(object);
+        for (const x of [b.min.x, b.max.x])
+          for (const y of [b.min.y, b.max.y])
+            for (const z of [b.min.z, b.max.z])
+              framePoints.push(new THREE.Vector3(x, y, z));
+      }
+      for (let i = 0; i < 24; i++) {
+        const a = i / 24 * Math.PI * 2;
+        framePoints.push(new THREE.Vector3(Math.cos(a) * 2.5, -0.02, Math.sin(a) * 2.5 * 0.78));
+      }
+    }
+    cameraRotation.makeRotationFromQuaternion(camera.quaternion).invert();
+    const tanV = Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2) * 0.88;
+    const tanH = tanV * camera.aspect;
+    let distance = 0;
+    for (const p of framePoints) {
+      viewPoint.copy(p).sub(controls.target).applyMatrix4(cameraRotation);
+      distance = Math.max(distance,
+        viewPoint.z + Math.abs(viewPoint.x) / tanH,
+        viewPoint.z + Math.abs(viewPoint.y) / tanV);
+    }
+    controls.minDistance = Math.max(6, distance);
+    controls.maxDistance = Math.max(11, controls.minDistance + 2);
+    viewOffset.copy(camera.position).sub(controls.target);
+    if (viewOffset.length() < controls.minDistance - 0.00001) {
+      // Stay slightly outside the limit so round-off cannot make OrbitControls
+      // clamp and emit change again on every otherwise idle frame.
+      camera.position.copy(controls.target).add(viewOffset.setLength(controls.minDistance + 0.05));
+      camera.updateMatrixWorld();
+    }
+  }
   function invalidate(duration = 350) {
     until = Math.max(until, performance.now() + duration);
     if (!frame && alive) {
@@ -163,6 +207,9 @@ export function createScene(container, getState) {
     const state = getState();
     for (const [id, model] of plants)
       if (!state.plants.some((p) => p.id === id)) {
+        plantOutlines.get(id)?.dispose();
+        plantOutlines.delete(id);
+        if (hoveredPlant === id) hoveredPlant = null;
         disposePlant(model);
         plants.delete(id);
       }
@@ -189,6 +236,7 @@ export function createScene(container, getState) {
     renderer.setSize(width, height, false);
     waterOutline.resize(width, height);
     lampOutline.resize(width, height);
+    for (const outline of plantOutlines.values()) outline.resize(width, height);
     camera.aspect = width / height;
     camera.fov = THREE.MathUtils.radToDeg(
       2 *
@@ -228,6 +276,7 @@ export function createScene(container, getState) {
       const changing = animatePlant(model, plant, frameTime / 1000, {
         instant: reducedMotion,
       });
+      if (changing && hoveredPlant === plant.id) plantOutlines.get(plant.id)?.sync();
       plantsAnimating ||= changing || moving;
       if (changing || moving) renderer.shadowMap.needsUpdate = true;
     }
@@ -235,6 +284,7 @@ export function createScene(container, getState) {
       renderer.shadowMap.needsUpdate = true;
     wateringCan.animate(now / 1000, alpha);
     controls.update();
+    fitComposition();
     renderer.render(scene, camera);
     updateAimLabel();
     if (
@@ -265,6 +315,21 @@ export function createScene(container, getState) {
     sync,
     invalidate,
     studioLights: [hemisphere, key],
+    setPlantHover(id) {
+      if (!plants.has(id)) id = null;
+      if (hoveredPlant === id) return;
+      plantOutlines.get(hoveredPlant)?.setVisible(false);
+      hoveredPlant = id;
+      if (id) {
+        if (!plantOutlines.has(id)) {
+          const outline = createHoverOutline(plants.get(id), { tint: 0xffdf80 });
+          outline.resize(container.clientWidth, container.clientHeight);
+          plantOutlines.set(id, outline);
+        }
+        plantOutlines.get(id).setVisible(true);
+      }
+      invalidate(150);
+    },
     setHover(kind) {
       if (hoveredTool === kind) return;
       waterOutline.setVisible(kind === "water");
@@ -349,6 +414,8 @@ export function createScene(container, getState) {
       controls.removeEventListener("end", onOrbitEnd);
       controls.dispose();
       document.removeEventListener("visibilitychange", onVisibility);
+      for (const outline of plantOutlines.values()) outline.dispose();
+      plantOutlines.clear();
       const geometries = new Set(),
         materials = new Set();
       scene.traverse((o) => {

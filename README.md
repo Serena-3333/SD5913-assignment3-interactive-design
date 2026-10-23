@@ -23,6 +23,7 @@ Open the address printed by Vite.
 
 - Plant **one to five individuals**, including repeats of the same species. The count above the jar states “N planted · max 5”; one plant is enough and filling the jar is optional. Drag a card onto any suitable soil point; a translucent preview shows local comfort. There are no fixed planting slots. Roots need a little separation and must stay inside the soil.
 - Drag an existing plant with the **left mouse button** to move that individual. Each plant has its own ID, health, growth and local conditions. The × beside its name removes only that plant.
+- Hover a plant to highlight its individual status slip; hover or keyboard-focus the slip to outline the matching plant. Visible instance numbers distinguish repeated species. The collection and status panel retain the original taped paper-note design.
 - The visible instruction above the jar explains **hold the right mouse button and drag to rotate** (two fingers on touch screens). **Reset view** restores the camera. Camera movement changes no ecological data.
 - Hover over the watering can for a gentle lift, warm outline, grab cursor and brief instruction, then drag it onto any soil patch. Its visible footprint can cover neighbouring roots; wetness stays in the soil when a plant moves. Water also has click-to-aim and arrow-key/Enter alternatives.
 - **Drag the light spot on the soil** to aim light directly, including over plants and from rotated views. Select Light or click the fixed lamp to reveal **Range** and **Intensity**. The lamp body stays in place. Clicking the lamp exposes a small aim point, including when intensity is zero; Escape cancels an unfinished aim. Light and comfort update immediately; health waits for the next day.
@@ -58,6 +59,8 @@ npm run test:performance
 
 Set `TERRARIUM_TEST_URL` if the development server uses a different address. `npm run test:production` checks the production preview; `TERRARIUM_PREVIEW_URL` can point it at another preview or the live site.
 
+`node tests/plantLink.mjs` checks bidirectional plant/status correspondence, repeated species, keyboard focus, gesture cleanup, outline disposal and return to idle rendering.
+
 The GitHub Actions workflow in [.github/workflows/deploy.yml](.github/workflows/deploy.yml) runs simulation tests, builds the project and deploys `dist/` to GitHub Pages on pushes to `main`. The deployment follows [Vite's project-site guidance](https://vite.dev/guide/static-deploy.html#github-pages). The demo is static and needs no backend or secret API keys.
 
 ## Project structure
@@ -79,6 +82,7 @@ The GitHub Actions workflow in [.github/workflows/deploy.yml](.github/workflows/
 - **Libre Caslon Display** — Libre Caslon Display Authors; SIL Open Font License 1.1. Bundled from the earlier visual direction. [Bundled license](public/fonts/Libre-Caslon-Display-LICENSE.txt), [font source](https://github.com/impallari/Libre-Caslon-Display).
 - **Visual references** — user-supplied screenshots from Xiaohongshu, including [Garden Galaxy](https://store.steampowered.com/app/1970460/Garden_Galaxy/) by Anneka Tran, a stylized island/lighthouse reference credited in the supplied screenshot to “ubrilliantidiot”, illustrated game interfaces, paper-note examples and a photographed terrarium. Original post URLs and some creators were not supplied, so that attribution remains incomplete. They informed layout, colour, material and composition only. Reference images are not included in the app as backgrounds, textures or models; scene geometry and UI are authored in code.
 - **Botanical journal backdrop** — author-selected AI-assisted illustration generated with OpenAI’s built-in image tool. The asset contains only ivory grid paper and marginal botanical art; all interface and interactive models remain rendered separately. [Asset and final prompt](docs/design/botanical-background.md).
+- **UI research references** — [Carbon typography](https://www.carbondesignsystem.com/building-blocks/foundations/typography/overview) informed role hierarchy; [Filofax Botanical sticky notes](https://us.filofax.com/products/botanical-sticky-notes-filofax) informed an explored notebook treatment, later rejected by the author in favor of the original paper notes. The interface is authored in CSS; no reference artwork is bundled. [Design decisions](docs/design/notebook-ui.md).
 - **AI assistance** — OpenAI Codex assisted implementation, procedural modeling, iteration, debugging, tests and documentation, with guidance from the user-invoked 3dviz-pro-max skill. No generated raster image replaces the interactive scene, and the running app calls no AI service. See [PROCESS.md](PROCESS.md).
 
 ## Limits
