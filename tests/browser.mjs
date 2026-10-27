@@ -64,7 +64,7 @@ async function assertUI(s) {
 }
 let first, second;
 await mkdir("test-results", { recursive: true });
-await mkdir("docs/screenshots", { recursive: true });
+await mkdir("test-results/browser", { recursive: true });
 try {
   await page.goto(DEV_URL);
   await page.waitForSelector("#scene-loading[hidden]", { state: "attached" });
@@ -93,7 +93,7 @@ try {
       assert.ok(await page.locator("#next-day-hint").isVisible());
     },
   );
-  await page.screenshot({ path: "docs/screenshots/empty-terrarium.png" });
+  await page.screenshot({ path: "test-results/browser/empty-terrarium.png" });
   await check(
     "left-dragging blank space does not rotate the camera",
     async () => {
@@ -290,7 +290,7 @@ try {
         ),
       );
       await page.screenshot({
-        path: "docs/screenshots/local-water-preview.png",
+        path: "test-results/browser/local-water-preview.png",
       });
       await page.mouse.up();
       await settle(page);
@@ -472,7 +472,7 @@ try {
       const rect = await page.locator(".day-controls").boundingBox();
       assert.ok(rect.y + rect.height <= 900);
       await assertUI(expected);
-      await page.screenshot({ path: "docs/screenshots/five-plants.png" });
+      await page.screenshot({ path: "test-results/browser/five-plants.png" });
     },
   );
   await check(
@@ -625,13 +625,13 @@ try {
   await put(page, "succulent", { x: 0.54, z: 0.32 });
   await put(page, "fern", { x: -0.04, z: -0.52 });
   await settle(page, 1300);
-  await page.screenshot({ path: "docs/screenshots/three-species.png" });
+  await page.screenshot({ path: "test-results/browser/three-species.png" });
   await page.locator("#collection-close").click();
   await page.waitForSelector("#plant-collection[hidden]", {
     state: "attached",
   });
   await settle(page, 400);
-  await page.screenshot({ path: "docs/screenshots/planted-terrarium.png" });
+  await page.screenshot({ path: "test-results/browser/planted-terrarium.png" });
   await check(
     "the complete workflow reports no JavaScript or WebGL console errors",
     async () => assert.deepEqual(errors, []),

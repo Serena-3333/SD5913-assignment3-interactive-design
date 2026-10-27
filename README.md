@@ -6,7 +6,7 @@ SD5913 Assignment 3 — Interactive Design
 
 A tiny botanical experiment for university students taking a two-to-three-minute break. Choose plants, arrange their environment and discover how they respond. No score, tasks, accounts or purchases.
 
-![Actual application screenshot](docs/screenshots/planted-terrarium.png)
+![Actual application screenshot](screenshots/planted-terrarium.png)
 
 ## Run locally
 
@@ -70,7 +70,8 @@ The GitHub Actions workflow in [.github/workflows/deploy.yml](.github/workflows/
 - `src/interactions/plantDrag.js`: soil raycasting, free placement/movement, tool gestures, right-button orbit separation and keyboard controls.
 - `src/ui/`, `src/styles/`: responsive paper notes, qualitative preferences and per-plant change explanations.
 - `tests/`: simulation, real-browser interactions, layout, rendering budget and production-path checks.
-- `PROCESS.md`: actual design decisions, iteration and AI-tool use. [User-testing notes](docs/USER_TESTING.md) distinguish supplied tester observations from developer validation and pending follow-up.
+- [PROCESS.md](PROCESS.md): the consolidated course process record, organized by concept, design, interaction, technical tradeoffs, user testing, validation and AI use. Participant feedback is distinguished from author review and automated checks.
+- `screenshots/`: the final application screenshot referenced by the README and process record. Temporary test captures go into ignored `test-results/`.
 
 ## Credits
 
@@ -81,10 +82,10 @@ The GitHub Actions workflow in [.github/workflows/deploy.yml](.github/workflows/
 - **DM Sans** — DM Sans Project Authors; SIL Open Font License 1.1. [Bundled license](public/fonts/DM-Sans-LICENSE.txt), [font source](https://github.com/googlefonts/dm-fonts).
 - **Libre Caslon Display** — Libre Caslon Display Authors; SIL Open Font License 1.1. Bundled from the earlier visual direction. [Bundled license](public/fonts/Libre-Caslon-Display-LICENSE.txt), [font source](https://github.com/impallari/Libre-Caslon-Display).
 - **Visual references** — user-supplied screenshots from Xiaohongshu, including [Garden Galaxy](https://store.steampowered.com/app/1970460/Garden_Galaxy/) by Anneka Tran, a stylized island/lighthouse reference credited in the supplied screenshot to “ubrilliantidiot”, illustrated game interfaces, paper-note examples and a photographed terrarium. Original post URLs and some creators were not supplied, so that attribution remains incomplete. They informed layout, colour, material and composition only. Reference images are not included in the app as backgrounds, textures or models; scene geometry and UI are authored in code.
-- **Botanical journal backdrop** — author-selected AI-assisted illustration generated with OpenAI’s built-in image tool. The asset contains only ivory grid paper and marginal botanical art; all interface and interactive models remain rendered separately. [Asset and final prompt](docs/design/botanical-background.md).
-- **UI research references** — [Carbon typography](https://www.carbondesignsystem.com/building-blocks/foundations/typography/overview) informed role hierarchy; [Filofax Botanical sticky notes](https://us.filofax.com/products/botanical-sticky-notes-filofax) informed an explored notebook treatment, later rejected by the author in favor of the original paper notes. The interface is authored in CSS; no reference artwork is bundled. [Design decisions](docs/design/notebook-ui.md).
+- **Botanical journal backdrop** — author-selected AI-assisted illustration generated with OpenAI’s built-in image tool. The asset contains only ivory grid paper and marginal botanical art; all interface and interactive models remain rendered separately. [Asset provenance and prompt summary](PROCESS.md#ai-assistance-and-asset-provenance).
+- **UI research references** — [Carbon typography](https://www.carbondesignsystem.com/building-blocks/foundations/typography/overview) informed role hierarchy; [Filofax Botanical sticky notes](https://us.filofax.com/products/botanical-sticky-notes-filofax) informed an explored notebook treatment, later rejected by the author in favor of the original paper notes. The interface is authored in CSS; no reference artwork is bundled. [Design decisions](PROCESS.md#visual-direction-and-interface).
 - **AI assistance** — OpenAI Codex assisted implementation, procedural modeling, iteration, debugging, tests and documentation, with guidance from the user-invoked 3dviz-pro-max skill. No generated raster image replaces the interactive scene, and the running app calls no AI service. See [PROCESS.md](PROCESS.md).
 
 ## Limits
 
-This is a stylized, deterministic learning experiment, not calibrated plant-care advice. It omits physical fluids, moisture diffusion, mutual shading, root competition, accounts and persistence; reloading begins a fresh garden. Plants have freely chosen root positions with a small minimum separation, rather than collision-resolved foliage. Mouse/touch layouts are adapted, but physical touch devices and student usability sessions remain unverified. Rendering stays at the device pixel ratio, capped at 2; batching, cached shadows and idle/background suspension reduce work without automatic blurring. See [performance notes](docs/performance.md) for earlier diagnostic measurements rather than universal frame-rate claims.
+This is a stylized, deterministic learning experiment, not calibrated plant-care advice. It omits physical fluids, moisture diffusion, mutual shading, root competition, accounts and persistence; reloading begins a fresh garden. Plants have freely chosen root positions with a small minimum separation, rather than collision-resolved foliage. Mouse/touch layouts are adapted, but physical touch devices and follow-up participant testing of the revised interface remain unverified. Rendering stays at the device pixel ratio, capped at 2; batching, cached shadows and idle/background suspension reduce work without automatic blurring. See [performance and rendering](PROCESS.md#performance-and-rendering) for historical measurements rather than universal frame-rate claims.
