@@ -4,7 +4,7 @@ SD5913 Assignment 3 — An interactive experience
 
 **[Try the live experience](https://serena-3333.github.io/SD5913-assignment3-interactive-design/)**
 
-A small botanical experiment for university students taking a two-to-three-minute break. Choose plants, arrange their environment and discover how they respond. You influence growth through water, light and placement rather than directly controlling it. There are no scores, tasks or purchases.
+A small terrarium simulator for people who love plants but struggle to keep them alive, or are curious about growing plants without having the space or conditions to do so. Choose plants, arrange their environment and discover how they respond. You influence growth through water, light and placement rather than directly controlling it. There are no scores, tasks or purchases.
 
 ![Actual Pocket Terrarium application](screenshots/planted-terrarium.png)
 
@@ -61,7 +61,7 @@ Set `TERRARIUM_TEST_URL` if Vite uses an address other than the browser checks' 
 - `src/simulation/`: independent ecological rules and individual plant state.
 - `src/scene/`: procedural models, lighting and animation.
 - `src/interactions/` and `src/ui/`: raycasting, gestures and feedback; `src/styles/` contains the interface styling.
-- [PROCESS.md](PROCESS.md): my starting idea, design changes, user trial, AI choices and recorded validation.
+- [PROCESS.md](PROCESS.md): my starting idea, design changes, two user-trial rounds with three people, AI choices and recorded validation.
 - `screenshots/`: the final application capture. Temporary test output goes to ignored `test-results/`.
 
 Dependencies are Three.js for 3D, Vite for serving/building and Playwright for browser checks. Versions and installation metadata are in `package.json` and `package-lock.json`. The [GitHub Actions workflow](.github/workflows/deploy.yml) tests, builds and deploys approved pushes to `main`.
@@ -78,7 +78,3 @@ This is a stylized experiment, not real plant-care guidance. It omits moisture d
 - **Fredoka** — Fredoka Project Authors; SIL Open Font License 1.1. [Bundled license](public/fonts/Fredoka-LICENSE.txt), [font source](https://github.com/hafontia/Fredoka-One).
 - **DM Sans** — DM Sans Project Authors; SIL Open Font License 1.1. [Bundled license](public/fonts/DM-Sans-LICENSE.txt), [font source](https://github.com/googlefonts/dm-fonts).
 - **Libre Caslon Display** — Libre Caslon Display Authors; SIL Open Font License 1.1. Bundled from the earlier visual direction. [Bundled license](public/fonts/Libre-Caslon-Display-LICENSE.txt), [font source](https://github.com/impallari/Libre-Caslon-Display).
-- **Visual references** — user-supplied screenshots from Xiaohongshu, including [Garden Galaxy](https://store.steampowered.com/app/1970460/Garden_Galaxy/) by Anneka Tran, a stylized island/lighthouse reference credited in the supplied screenshot to “ubrilliantidiot”, illustrated game interfaces, paper-note examples and a photographed terrarium. Original post URLs and some creators were not supplied, so that attribution remains incomplete. They informed layout, colour, material and composition only. Reference images are not included in the app as backgrounds, textures or models; scene geometry and UI are authored in code.
-- **Botanical journal backdrop** — author-selected AI-assisted illustration generated with OpenAI’s built-in image tool. The asset contains only ivory grid paper and marginal botanical art; all interface and interactive models remain rendered separately. [Asset provenance and prompt summary](PROCESS.md#ai-assistance-and-asset-provenance).
-- **UI research references** — [Carbon typography](https://www.carbondesignsystem.com/building-blocks/foundations/typography/overview) informed role hierarchy; [Filofax Botanical sticky notes](https://us.filofax.com/products/botanical-sticky-notes-filofax) informed an explored notebook treatment, later rejected by the author in favor of the original paper notes. The interface is authored in CSS; no reference artwork is bundled. [Design decisions](PROCESS.md#visual-direction-and-interface).
-- **AI assistance** — I used OpenAI Codex to generate and revise substantial parts of the code, procedural models, tests and documentation, with guidance from the 3dviz-pro-max skill. I directed the design and reviewed the results; PROCESS records suggestions I kept and rejected. No generated raster image replaces the interactive scene, and the running app calls no AI service. See [PROCESS.md](PROCESS.md).

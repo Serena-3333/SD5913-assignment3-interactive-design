@@ -4,7 +4,7 @@ SD5913 Assignment 3 — An interactive experience
 
 ## Starting idea
 
-I wanted to make a small, calming experience for university students taking a short break. Instead of designing a game with scores or tasks, I chose a miniature terrarium where people could arrange plants and discover how environmental choices affect them.
+I often struggled to care for my own succulents, and some died. I wanted a simulator where I could experiment with looking after plants without risking more living plants. From that personal starting point, I developed the idea for others who love plants but struggle to keep them alive, as well as people interested in growing plants who lack the space or conditions to do so. I chose a miniature terrarium where people could arrange plants and discover how environmental choices affect them, without scores or tasks.
 
 My central idea was that users should not directly command plants to grow. They should choose plants, adjust water and light, and observe the consequences. The loop became **plant → adjust → observe → advance time → try again**. One plant is enough to begin; the five-plant limit is capacity rather than a completion target.
 
@@ -24,7 +24,13 @@ I also reduced the central heading so that it no longer competes with the produc
 
 ## Interaction decisions and changes
 
-The first prototype used three fixed planting positions. I changed it to one to five freely positioned individuals, including repeated species, because choosing an arrangement should be part of the experiment. Each individual keeps its own identity, Health and Growth when moved. Water belongs to the soil, so moving a plant changes the conditions at its roots rather than carrying its old water with it.
+My first version was an MVP for testing the basic loop: choose a plant, place it in one of three fixed positions, adjust the environment and advance a day to see its response. It helped me test whether the simulation and feedback worked before expanding the interaction.
+
+![First MVP showing the three fixed planting positions](screenshots/first-mvp.png)
+
+*The first MVP: three fixed planting positions and a shared environment.*
+
+In the current version, I changed planting to one to five freely positioned individuals, including repeated species, because choosing an arrangement should be part of the experiment. I also refined the controls and rendering to reduce interaction conflicts and improve responsiveness. Each individual keeps its own identity, Health and Growth when moved. Water belongs to the soil, so moving a plant changes the conditions at its roots rather than carrying its old water with it.
 
 I separated left-button manipulation from right-button rotation to reduce conflicts. Invalid drops and cancelled gestures preserve the previous state. Visible rotation instructions, Reset view, click-to-place and keyboard alternatives give users ways to recover when dragging is difficult.
 
@@ -43,24 +49,27 @@ Local watering is the code path I would use to explain the project:
 
 This is more than a watering animation: the action changes stored environmental values that influence the next day's health and growth. The visual and numerical feedback come from those values rather than a preset outcome.
 
-## User trial and my response
+## User trials and my response
 
-### How I tried it with someone
+I gathered feedback in two rounds from three different people: one person in the first round and two more in the second. The first tester had followed my development and already knew how to play. After making changes based on that feedback, I invited two new users who had not seen the project to try it before I explained the controls; afterwards, I discussed their questions and suggestions with them. I kept their identities and private conversations private.
 
-I shared the demo with another person and first let them try it without explaining the controls. Afterwards, I discussed what they had attempted and what confused them in a follow-up chat, explaining the controls and data distinctions as needed. I collected eight screenshots of that feedback conversation to inform revisions; the private conversation and the person's identity are not included in the repository.
+### First round: one user
 
-The observations below come from their written feedback after using the demo, rather than a timed observational study. I did not collect task completion rates or formal timing measurements. I distinguish their feedback from my own later visual reviews.
+Because the first tester already knew the project, their feedback could not fully represent a new user’s first experience. They gave brief feedback that interaction, especially rotation, felt slow and that changes in plant growth and health were much more noticeable in the numbers than in the models. I responded by reducing rendering work while preserving image clarity. I also made seedlings smaller, increased the difference between early and mature growth, added staged foliage and made growth transitions more noticeable. Poor health now also affects a plant's color and posture.
 
-| What the tester reported | What I changed and why |
+### Second round: two users
+
+I then asked two new users to try the revised experience. Their feedback helped me identify problems with first-time guidance, controls and the meaning of the plant data.
+
+| Feedback | My response |
 | --- | --- |
-| They focused on Soil average and thought it should match the plants' water needs. | I removed the running whole-jar average. The empty state explains starting moisture, while short local causes guide later care. An extra number was attracting attention without helping the decision. |
-| A higher comfort percentage with Health −1, or a lower percentage with Health +4, appeared contradictory. They interpreted the change as a forecast. | I separated Comfort now from Health/Growth and dated the last completed day's result. Current adjustments no longer rewrite the historical outcome. |
-| They did not know whether a low percentage called for water or light, then noticed the small diagnostic text. | I made the current cause easier to find and retained both water/light causes when relevant. After reviewing the revised panel myself, I removed repeated explanations and exact local readings to keep the message short. |
-| Moving the lamp from the front was awkward. They later found direct light targeting easier and questioned moving the lamp at all. | I fixed the physical lamp and made the soil light spot the primary target. Hover feedback reveals that it is interactive; Range/Intensity remain available when needed. |
+| Soil average was confusing: it seemed like a value to match to plant needs, even in an empty jar. | I removed the ongoing whole-jar average and used an empty-state explanation and local condition messages instead. |
+| Comfort and Health changes appeared contradictory, and a previous day's Health change could be mistaken for a prediction. Small diagnostic text made it hard to tell whether a plant needed water or light. | I distinguished Comfort now from the dated Last day result, made short condition messages more prominent, and removed repeated explanations and exact local readings. |
+| The first planting action, draggable plant cards and the water and light controls were not easy to discover. The tester in the chat also found moving the lamp awkward from the front and preferred direct light targeting. | I clarified planting instructions, added cues for interactive cards and tools, and made the light spot the main target while keeping range and intensity controls. |
+| Right-drag rotation was hard to discover, and the plant count did not clearly communicate capacity. | I made the rotation instruction and Reset view more visible and changed the count to say how many plants are planted out of a maximum of five. |
+| A user suggested that plants should be able to die after prolonged poor care. | I added a death condition after persistently critical health, a dried plant model and a death label in the status panel. |
 
-Earlier user feedback also reported sluggish rotation and plant changes that were much less visible than their numbers. I responded by prioritizing rendering efficiency, smaller seedlings, staged new foliage and a short growth transition. Mature plants become roughly twice seedling size at comparable health. Poor health changes vigor, color and posture; soil darkening/cracks and persistent dead plants make longer-term conditions visible.
-
-My own later reviews addressed repeated instructions, crowded data, plant/status correspondence and clipped scene framing. Those are my design judgments, not additional participant findings. I have not yet collected a follow-up trial showing that the revised interface resolves every issue. A useful next check would ask a new user to plant, adjust light and explain the difference between Comfort now and Last day without help.
+Afterwards, my own reviews led me to refine the plant-to-status highlighting and the scene framing.
 
 ## Technical choices, error handling and verification
 
@@ -72,28 +81,42 @@ I selected ordinary mistakes that fit this interaction: dropping outside the jar
 
 ### Performance and rendering
 
-When an optimization made the scene blurry, I chose to preserve sharpness and reduce rendering work instead. The retained changes batch repeated leaves, simplify secondary geometry, cache shadows and stop drawing settled/hidden scenes. Debugging with Codex also found a camera-change callback that could start extra rendering loops; correcting that was more useful than continually reducing resolution. The canvas now keeps device resolution capped at DPR 2 during rotation and at rest.
+In the first version, I had not paid enough attention to loading and rendering cost. The models had too many small geometric pieces, and rotating the scene repeatedly triggered rendering work, making interaction feel sluggish. I subsequently simplified the geometry and reduced unnecessary rendering. When an optimization made the scene blurry, I chose to preserve sharpness and reduce rendering work instead. The retained changes batch repeated leaves, simplify secondary geometry, cache shadows and stop drawing settled/hidden scenes. Debugging with Codex also found a camera-change callback that could start extra rendering loops; correcting that was more useful than continually reducing resolution. The canvas now keeps device resolution capped at DPR 2 during rotation and at rest.
 
-Development diagnostics and screenshots informed these choices, but I do not treat a headless-browser result as a guaranteed frame rate on every laptop. Camera fitting now leaves room for the jar, lamp, resting can and base, while the scene still returns to idle after interaction.
+Development diagnostics and screenshots helped me assess these changes. Camera fitting now leaves room for the jar, lamp, resting can and base, while the scene still returns to idle after interaction.
 
 ### What was checked
 
-The recorded development checks include 40 Node rule/model tests, the core 22-check Chromium workflow, focused tool and plant/status-link checks, seven viewport sizes, and multiple camera angles. Coverage includes local water/light, daily updates, lifecycle boundaries, cancelled gestures, Reset/Clear, repeated species and resource cleanup. The final functional release's Node tests and build passed on October 23; these are historical results, not tests rerun for this documentation edit.
+The recorded development checks include 40 Node rule/model tests, the core 22-check Chromium workflow, focused tool and plant/status-link checks, seven viewport sizes, and multiple camera angles. Coverage includes local water/light, daily updates, lifecycle boundaries, cancelled gestures, Reset/Clear, repeated species and resource cleanup. The Node tests and build passed for the October 23 functional release.
 
-The production preview was checked under the GitHub Pages repository path so fonts, favicon and assets would load correctly. The public repository was also accessed without authentication during the submission review. Tests and screenshots are implementation evidence, not proof of successful user understanding. The README provides reproduction commands; temporary browser output goes to ignored `test-results/`.
+The production preview was checked under the GitHub Pages repository path so fonts, favicon and assets would load correctly. The public repository was also accessed without authentication during the submission review. The README provides reproduction commands; temporary browser output goes to ignored `test-results/`.
 
 Remaining limits are no saved garden, simplified ecology, and incomplete physical-device/cross-browser testing. I would prioritize a short follow-up user trial and device checks over adding more features to this assignment.
 
 ## AI assistance and asset provenance
 
-I used **OpenAI Codex** to generate and revise substantial parts of the JavaScript, procedural models, styling, tests and documentation. I used the **3dviz-pro-max** skill for guidance on the low-poly modeling and lighting direction, and OpenAI's image tool to explore background concepts and make the final decorative botanical image. My role was to define the intended experience, supply references, decide priorities, try the results, bring in user feedback and accept or reject changes. I am not presenting the implementation as entirely unaided coding.
+I used **OpenAI Codex** to generate and revise substantial parts of the JavaScript, procedural models, styling, tests and documentation. I used the **3dviz-pro-max** skill for guidance on the low-poly modeling and lighting direction, and OpenAI's image tool to explore background concepts and make the final decorative botanical image. My role was to define the intended experience, supply references, decide priorities, try the results, bring in user feedback and accept or reject changes.
 
-**One suggestion I kept:** I kept Codex's use of batched repeated leaves and cached shadow updates. These reduce unnecessary drawing while preserving the plant silhouettes and lighting, so I could improve responsiveness without making the image softer. I also reused the scene's plant models for collection thumbnails to keep their appearance consistent.
+### AI suggestions and results I kept
 
-**One suggestion I changed/rejected:** lowering rendering resolution improved apparent performance but made the image visibly soft. I rejected that tradeoff and asked for geometry reduction and rendering/scheduling fixes while keeping clarity. I also rejected the notebook and tabletop visual treatments after trying them, retaining the original paper panels instead.
+- **Procedural plants and thumbnails:** I kept the low-poly models and reused them for the collection thumbnails, making each plant recognizable in both the cards and the scene while allowing it to change as it grows.
+- **Rendering efficiency:** I kept batched repeated leaves, simplified secondary geometry and cached shadows. These changes reduced rendering work while preserving the plants' silhouettes and lighting.
+- **Growth feedback:** After the first tester found growth difficult to see, I asked Codex to make seedlings smaller and growth more visible. I kept the wider size range, staged leaves and growth transition because they make changes easier to observe.
+- **Direct environmental controls:** I kept local watering and direct light-spot control developed with Codex. Watering an area makes plant placement meaningful, and moving the light spot is easier than manipulating the lamp from every angle.
+- **Feedback and navigation:** I kept the short condition messages, the distinction between Comfort now and the previous day's Health change, and clearer rotation and reset controls. Linking a plant to its status row also helps users identify repeated species.
+- **Botanical background:** I selected a botanical paper design from AI-generated variations and refined it with the image tool for the final interface.
 
-The generated background, [botanical-journal.webp](src/assets/backgrounds/botanical-journal.webp), contains ivory grid paper and marginal foliage/flowers only. I asked the image tool to remove text, UI, models, tools, shadows, table and cloth from the concept before using it as a background. The interactive world is separate procedural Three.js geometry, not an image or prerecorded animation. The running application calls no AI API and requires no AI account or key.
+### AI suggestions and results I rejected or changed
 
-My supplied references informed layout, color and miniature composition rather than becoming bundled artwork. They included Garden Galaxy, an island/lighthouse image, illustrated interfaces, paper notes and a photographed terrarium. Some original post links/creators were unavailable, which I acknowledge in the README credits. Carbon informed type hierarchy; Filofax and scrapbook references informed the subsequently rejected notebook exploration. Dependency, font and reference credits remain in README, with bundled font licenses in the project.
+- **Lower rendering resolution:** One optimization improved responsiveness but made the scene visibly blurry. I rejected that tradeoff and asked Codex to reduce geometry and unnecessary rendering while retaining image clarity.
+- **Notebook panels:** I tried notebook-style covers and binding in the AI-assisted interface revisions, but preferred the original paper-note panels and returned to them.
+- **Tabletop and mat:** I tried a wooden tabletop and cloth, but the elements looked inconsistent when the scene rotated. I replaced that treatment with the botanical paper background.
+- **Water and lamp controls:** I moved away from the first implementation's shared watering and movable lamp. I also changed an initial watering design focused on individual points into an area that can reach neighboring plants.
+- **Crowded explanations:** I removed the soil average, exact local readings, repeated explanations and redundant instructions from successive interface revisions. Persistent tool labels also gave way to brief hover cues, leaving more room for the terrarium.
+- **Fixed placement:** The first MVP had three fixed planting positions. I changed it to allow one to five freely placed plants, including repeated species, so arranging the garden became part of the experience.
+
+The generated background, [botanical-journal.webp](src/assets/backgrounds/botanical-journal.webp), contains ivory grid paper and marginal foliage/flowers only. I asked the image tool to remove text, UI, models, tools, shadows, table and cloth from the concept before using it as a background. The interactive world is separate procedural Three.js geometry, not an image or prerecorded animation.
+
+My supplied references informed layout, color and miniature composition rather than becoming bundled artwork. They included [Garden Galaxy](https://store.steampowered.com/app/1970460/Garden_Galaxy/) by Anneka Tran; an island/lighthouse image credited in the screenshot to “ubrilliantidiot”; illustrated interfaces, paper notes and a photographed terrarium. I could not find every original post or identify every creator, so those credits remain incomplete. [Carbon typography](https://www.carbondesignsystem.com/building-blocks/foundations/typography/overview) informed type hierarchy; [Filofax Botanical sticky notes](https://us.filofax.com/products/botanical-sticky-notes-filofax) and scrapbook references informed the subsequently rejected notebook exploration. Dependency and font credits remain in README, with bundled font licenses in the project.
 
 The main lesson for me was that a convincing miniature is only useful when people understand what they can change and what the feedback means. Simplifying the lamp and data panel contributed more to that aim than adding more controls or decoration.
